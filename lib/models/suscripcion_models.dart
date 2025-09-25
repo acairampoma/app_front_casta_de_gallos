@@ -156,10 +156,14 @@ class PlanCatalogo {
   final int topesPorGallo;
   final int peleasPorGallo;
   final int vacunasPorGallo;
-  final bool esPopular;
-  final bool esPremium;
+  final bool soportePremium;
+  final bool respaldoNube;
+  final bool estadisticasAvanzadas;
+  final bool videosIlimitados;
   final bool activo;
   final int orden;
+  final bool destacado;
+  final int? duracionSemanas;
   final List<String> caracteristicas;
 
   PlanCatalogo({
@@ -173,12 +177,19 @@ class PlanCatalogo {
     required this.topesPorGallo,
     required this.peleasPorGallo,
     required this.vacunasPorGallo,
-    this.esPopular = false,
-    this.esPremium = false,
+    this.soportePremium = false,
+    this.respaldoNube = false,
+    this.estadisticasAvanzadas = false,
+    this.videosIlimitados = false,
     this.activo = true,
     this.orden = 0,
+    this.destacado = false,
+    this.duracionSemanas,
     this.caracteristicas = const [],
   });
+
+  // ✅ Helper para determinar si es popular
+  bool get esPopular => destacado;
 
   factory PlanCatalogo.fromJson(Map<String, dynamic> json) {
     return PlanCatalogo(
@@ -192,11 +203,15 @@ class PlanCatalogo {
       topesPorGallo: json['topes_por_gallo'] ?? 2,
       peleasPorGallo: json['peleas_por_gallo'] ?? 2,
       vacunasPorGallo: json['vacunas_por_gallo'] ?? 2,
-      esPopular: json['es_popular'] ?? false,
-      esPremium: json['es_premium'] ?? false,
+      soportePremium: json['soporte_premium'] ?? false,
+      respaldoNube: json['respaldo_nube'] ?? false,
+      estadisticasAvanzadas: json['estadisticas_avanzadas'] ?? false,
+      videosIlimitados: json['videos_ilimitados'] ?? false,
       activo: json['activo'] ?? true,
       orden: json['orden'] ?? 0,
-      caracteristicas: json['caracteristicas'] != null 
+      destacado: json['destacado'] ?? false,
+      duracionSemanas: json['duracion_semanas'],
+      caracteristicas: json['caracteristicas'] != null
           ? List<String>.from(json['caracteristicas'])
           : [],
     );
@@ -222,7 +237,21 @@ class PlanCatalogo {
   /// Es el plan más caro
   bool get esPlanProfesional => codigo == 'profesional';
 
-  /// Color de la tarjeta según el plan
+  /// ✅ Duración de streaming basada en duracionSemanas de la BD
+  String get duracionStreaming {
+    if (duracionSemanas == null || duracionSemanas == 0) {
+      return 'No incluido';
+    } else if (duracionSemanas == 1) {
+      return '1 semana';
+    } else if (duracionSemanas! < 4) {
+      return '$duracionSemanas semanas';
+    } else {
+      final meses = (duracionSemanas! / 4).round();
+      return meses == 1 ? '1 mes' : '$meses meses';
+    }
+  }
+
+  /// ✅ Color de la tarjeta según el plan
   String get colorTarjeta {
     switch (codigo) {
       case 'gratuito': return '#ecf0f1';   // Gris claro

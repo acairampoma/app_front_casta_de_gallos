@@ -3,6 +3,8 @@ import '../../../shared/widgets/base_screen.dart';
 import '../../../shared/widgets/adaptive_layout_builder.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/suscripcion_service.dart';
+import '../../../models/suscripcion_models.dart';
 import '../../../features/planes/screens/planes_screen.dart';
 import '../../../config/adaptive_ui_config.dart';
 
@@ -33,6 +35,258 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       print('💥 Error cargando datos usuario: $e');
     }
+  }
+
+  /// 📺 Verificar acceso a transmisiones antes de navegar
+  Future<void> _verificarAccesoTransmisiones(BuildContext context) async {
+    try {
+      print('📺 [HomeScreen] Verificando acceso a transmisiones...');
+
+      // Obtener suscripción activa del usuario
+      Suscripcion? suscripcionActiva;
+      try {
+        suscripcionActiva = await SuscripcionService.obtenerSuscripcionActual();
+      } catch (e) {
+        print('🚫 [HomeScreen] Error obteniendo suscripción: $e');
+        // Si hay error, asumir que no hay suscripción
+        suscripcionActiva = null;
+      }
+
+      if (suscripcionActiva == null) {
+        print('🚫 [HomeScreen] Sin suscripción activa');
+        _mostrarDialogoSinSuscripcion(context);
+        return;
+      }
+
+      // Verificar si la suscripción incluye streaming
+      final planCodigo = suscripcionActiva.planType.toLowerCase();
+      if (planCodigo == 'gratuito') {
+        print('🚫 [HomeScreen] Plan gratuito no incluye streaming');
+        _mostrarDialogoPlanGratuito(context);
+        return;
+      }
+
+      // Verificar si el acceso aún está vigente
+      final fechaActivacion = suscripcionActiva.fechaInicio;
+      if (fechaActivacion == null) {
+        print('🚫 [HomeScreen] Suscripción no activada');
+        _mostrarDialogoSuscripcionNoActivada(context);
+        return;
+      }
+
+      // Calcular fecha de expiración del streaming
+      final fechaExpiracionStreaming = _calcularFechaExpiracionStreaming(fechaActivacion, planCodigo);
+      final ahora = DateTime.now();
+
+      if (ahora.isAfter(fechaExpiracionStreaming)) {
+        print('🚫 [HomeScreen] Acceso a streaming expirado');
+        print('📅 [HomeScreen] Expiró: ${fechaExpiracionStreaming.toIso8601String()}');
+        _mostrarDialogoStreamingExpirado(context, fechaExpiracionStreaming);
+        return;
+      }
+
+      // ✅ Todo bien, permitir acceso
+      print('✅ [HomeScreen] Acceso a streaming autorizado');
+      print('📅 [HomeScreen] Válido hasta: ${fechaExpiracionStreaming.toIso8601String()}');
+      Navigator.pushNamed(context, '/transmisiones');
+
+    } catch (e) {
+      print('❌ [HomeScreen] Error verificando acceso: $e');
+      _mostrarDialogoError(context, e.toString());
+    }
+  }
+
+  /// 📅 Calcular fecha de expiración del streaming según el plan
+  DateTime _calcularFechaExpiracionStreaming(DateTime fechaActivacion, String planCodigo) {
+    switch (planCodigo) {
+      case 'basico':
+        return fechaActivacion.add(const Duration(days: 7)); // 1 semana
+      case 'premium':
+        return fechaActivacion.add(const Duration(days: 14)); // 2 semanas
+      case 'profesional':
+        return fechaActivacion.add(const Duration(days: 30)); // 1 mes
+      default:
+        return fechaActivacion; // Plan gratuito, ya expirado
+    }
+  }
+
+  /// 🚫 Diálogo: Sin suscripción activa
+  void _mostrarDialogoSinSuscripcion(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.tv_off, color: Colors.red, size: 24),
+            SizedBox(width: 8),
+            Text('Sin Acceso a Streaming'),
+          ],
+        ),
+        content: const Text(
+          'No tienes una suscripción activa para acceder a las transmisiones en vivo.\n\n'
+          '¿Te gustaría suscribirte ahora?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PlanesScreen()),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Ver Planes', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 🆓 Diálogo: Plan gratuito
+  void _mostrarDialogoPlanGratuito(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.upgrade, color: Colors.orange, size: 24),
+            SizedBox(width: 8),
+            Text('Actualiza tu Plan'),
+          ],
+        ),
+        content: const Text(
+          'Tu plan gratuito no incluye acceso a transmisiones en vivo.\n\n'
+          'Actualiza a un plan premium para disfrutar de:\n'
+          '• Básico: 1 semana de streaming\n'
+          '• Premium: 2 semanas de streaming\n'
+          '• Profesional: 1 mes de streaming',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PlanesScreen()),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            child: const Text('Actualizar Plan', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// ⏱️ Diálogo: Suscripción no activada
+  void _mostrarDialogoSuscripcionNoActivada(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.pending_actions, color: Colors.blue, size: 24),
+            SizedBox(width: 8),
+            Text('Suscripción Pendiente'),
+          ],
+        ),
+        content: const Text(
+          'Tu suscripción está pendiente de activación por nuestro equipo.\n\n'
+          'Una vez aprobada, tendrás acceso completo a las transmisiones en vivo.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Entendido'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const PlanesScreen(abrirMiSuscripcion: true),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+            child: const Text('Ver Estado', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 📅 Diálogo: Streaming expirado
+  void _mostrarDialogoStreamingExpirado(BuildContext context, DateTime fechaExpiracion) {
+    final diasExpirado = DateTime.now().difference(fechaExpiracion).inDays;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.access_time_filled, color: Colors.red, size: 24),
+            SizedBox(width: 8),
+            Text('Acceso Expirado'),
+          ],
+        ),
+        content: Text(
+          'Tu acceso a streaming expiró hace $diasExpirado día${diasExpirado != 1 ? 's' : ''}.\n\n'
+          'Renueva tu suscripción para seguir disfrutando de las transmisiones en vivo.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PlanesScreen()),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Renovar', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// ❌ Diálogo: Error general
+  void _mostrarDialogoError(BuildContext context, String error) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.error_outline, color: Colors.red, size: 24),
+            SizedBox(width: 8),
+            Text('Error'),
+          ],
+        ),
+        content: Text(
+          'Error verificando el acceso a transmisiones:\n\n$error',
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
   }
   
   Future<void> _initializeNotifications() async {
@@ -514,7 +768,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Imagen más grande para tablet
+              // Imagen o icono más grande para tablet
               Container(
                 width: 80,
                 height: 80,
@@ -528,30 +782,44 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Image.asset(
-                    item.imagePath!,
-                    width: 80,
-                    height: 80,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
+                child: item.icon != null
+                    ? Container(
                         width: 80,
                         height: 80,
                         decoration: BoxDecoration(
-                          color: item.color.withOpacity(0.2),
+                          color: item.color.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Icon(
-                          Icons.image_not_supported,
+                          item.icon!,
                           size: 40,
                           color: item.color,
                         ),
-                      );
-                    },
-                  ),
-                ),
+                      )
+                    : ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Image.asset(
+                          item.imagePath!,
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                color: item.color.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Icon(
+                                Icons.image_not_supported,
+                                size: 40,
+                                color: item.color,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
               ),
               const SizedBox(height: 16),
               
@@ -573,6 +841,33 @@ class _HomeScreenState extends State<HomeScreen> {
   
   List<_MenuItem> _getMenuItems(BuildContext context) {
     return [
+      // 🥇 PRIMERA POSICIÓN: Transmisiones
+      _MenuItem(
+        title: 'Transmisiones',
+        icon: Icons.live_tv,
+        color: Colors.red,
+        onTap: () => _verificarAccesoTransmisiones(context),
+      ),
+      // 🥈 SEGUNDA POSICIÓN: Marketplace (nuevo módulo)
+      _MenuItem(
+        title: 'Marketplace',
+        imagePath: 'assets/images/modulos/markeplace.webp',
+        color: Colors.indigo,
+        onTap: () {
+          // Navegación segura: intenta ir a /marketplace y si no existe la ruta, muestra aviso
+          try {
+            Navigator.pushNamed(context, '/marketplace');
+          } catch (e) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Marketplace aún no está disponible'),
+                backgroundColor: Colors.indigo,
+              ),
+            );
+          }
+        },
+      ),
+      // 🥉 RESTO DE MÓDULOS EN ORDEN ESTABLECIDO
       _MenuItem(
         title: 'Pedigrí',
         imagePath: 'assets/images/modulos/PEDIGRI.webp',
@@ -712,7 +1007,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // 🖼️ IMAGEN MÁS PEQUEÑA PARA DAR ESPACIO AL TÍTULO
+                  // 🖼️ IMAGEN O ICONO MÁS PEQUEÑO PARA DAR ESPACIO AL TÍTULO
                   Container(
                     width: imageSize,
                     height: imageSize,
@@ -726,30 +1021,44 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.asset(
-                        item.imagePath!,
-                        width: imageSize,
-                        height: imageSize,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
+                    child: item.icon != null
+                        ? Container(
                             width: imageSize,
                             height: imageSize,
                             decoration: BoxDecoration(
-                              color: item.color.withOpacity(0.2),
+                              color: item.color.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Icon(
-                              Icons.image_not_supported,
-                              size: imageSize * 0.4,
+                              item.icon!,
+                              size: imageSize * 0.5,
                               color: item.color,
                             ),
-                          );
-                        },
-                      ),
-                    ),
+                          )
+                        : ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.asset(
+                              item.imagePath!,
+                              width: imageSize,
+                              height: imageSize,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: imageSize,
+                                  height: imageSize,
+                                  decoration: BoxDecoration(
+                                    color: item.color.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    Icons.image_not_supported,
+                                    size: imageSize * 0.4,
+                                    color: item.color,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
                   ),
                   SizedBox(height: spacing * 0.6),
                   
@@ -780,13 +1089,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _MenuItem {
   final String title;
-  final String? imagePath; // 🖼️ REEMPLAZAMOS IconData por imagePath
+  final String? imagePath; // 🖼️ Path para imagen de asset
+  final IconData? icon; // 🎯 Icono Material Design
   final Color color;
   final VoidCallback onTap;
 
   _MenuItem({
     required this.title,
     this.imagePath, // 🖼️ OPCIONAL para mantener compatibilidad
+    this.icon, // 🎯 OPCIONAL para usar iconos
     required this.color,
     required this.onTap,
   });

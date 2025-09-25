@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/widgets/base_screen.dart';
 import '../../../models/suscripcion_models.dart';
 import '../../../models/pago_models.dart';
 import '../../../services/suscripcion_service.dart';
@@ -222,7 +223,7 @@ class _PlanesScreenState extends State<PlanesScreen>
         topesPorGallo: 10,
         peleasPorGallo: 10,
         vacunasPorGallo: 10,
-        esPopular: true,
+        destacado: true,
         caracteristicas: ['Hasta 20 gallos', '10 entrenamientos por gallo', '10 peleas por gallo', '10 vacunas por gallo', 'Soporte por email'],
       ),
       PlanCatalogo(
@@ -236,7 +237,6 @@ class _PlanesScreenState extends State<PlanesScreen>
         topesPorGallo: 999,
         peleasPorGallo: 999,
         vacunasPorGallo: 999,
-        esPremium: true,
         caracteristicas: ['Hasta 50 gallos', 'Entrenamientos ilimitados', 'Peleas ilimitadas', 'Vacunas ilimitadas', 'Analytics avanzado', 'Soporte prioritario'],
       ),
       PlanCatalogo(
@@ -250,7 +250,6 @@ class _PlanesScreenState extends State<PlanesScreen>
         topesPorGallo: 999,
         peleasPorGallo: 999,
         vacunasPorGallo: 999,
-        esPremium: true,
         caracteristicas: ['Gallos ILIMITADOS', 'Todo ilimitado', 'Marketplace integrado', 'IA avanzada', 'Soporte 24/7'],
       ),
     ];
@@ -309,11 +308,17 @@ class _PlanesScreenState extends State<PlanesScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      body: _isLoading
-          ? _buildLoadingState()
-          : _buildMainContent(),
+    return BaseScreen(
+      title: 'Planes',
+      subtitle: 'Gestiona tu suscripción',
+      currentIndex: 3,
+      showAppBar: false,
+      child: Container(
+        color: const Color(0xFFF8F9FA),
+        child: _isLoading
+            ? _buildLoadingState()
+            : _buildMainContent(),
+      ),
     );
   }
 
@@ -398,7 +403,13 @@ class _PlanesScreenState extends State<PlanesScreen>
                     color: Colors.transparent,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(24),
-                      onTap: () => Navigator.of(context).pop(),
+                      onTap: () {
+                        if (Navigator.of(context).canPop()) {
+                          Navigator.of(context).pop();
+                        } else {
+                          Navigator.of(context).pushReplacementNamed('/home');
+                        }
+                      },
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         child: const Icon(

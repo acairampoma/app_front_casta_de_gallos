@@ -1,0 +1,2054 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🐓 Marketplace Gallos - App Móvil</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #d32f2f;
+            --primary-dark: #b71c1c;
+            --secondary-color: #ff6f00;
+            --accent-color: #ffc107;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+            --white: #ffffff;
+            --gray-50: #fafafa;
+            --gray-100: #f5f5f5;
+            --gray-200: #eeeeee;
+            --gray-300: #e0e0e0;
+            --gray-400: #bdbdbd;
+            --gray-500: #9e9e9e;
+            --gray-600: #757575;
+            --gray-700: #616161;
+            --gray-800: #424242;
+            --gray-900: #212121;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.1);
+            --border-radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 100%);
+            color: var(--gray-800);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* SIMULADOR DE FRAME MÓVIL */
+        .mobile-frame {
+            max-width: 375px;
+            margin: 20px auto;
+            background: #000;
+            padding: 8px;
+            border-radius: 25px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+        }
+
+        .mobile-screen {
+            width: 100%;
+            height: 812px;
+            background: var(--white);
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* BARRA DE ESTADO */
+        .status-bar {
+            background: var(--gray-900);
+            color: var(--white);
+            padding: 8px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            font-weight: 600;
+            height: 44px;
+        }
+
+        .status-left {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-right {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* HEADER DE LA APP */
+        .app-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: var(--white);
+            padding: 16px 20px;
+            box-shadow: var(--shadow-md);
+            position: relative;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .header-btn {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: var(--white);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .header-btn:hover {
+            background: rgba(255,255,255,0.25);
+            transform: scale(1.05);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: var(--danger-color);
+            color: var(--white);
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        /* BÚSQUEDA */
+        .search-container {
+            margin-top: 8px;
+        }
+
+        .search-box {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 25px;
+            padding: 12px 20px;
+            padding-left: 45px;
+            color: var(--white);
+            font-size: 16px;
+            width: 100%;
+            position: relative;
+        }
+
+        .search-box::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,0.7);
+        }
+
+        /* NAVEGACIÓN TABS */
+        .tab-navigation {
+            background: var(--white);
+            display: flex;
+            border-bottom: 1px solid var(--gray-200);
+            padding: 0 16px;
+        }
+
+        .tab-item {
+            flex: 1;
+            padding: 16px 8px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray-600);
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .tab-item.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .tab-item:hover {
+            color: var(--primary-color);
+        }
+
+        /* CONTENIDO PRINCIPAL */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            padding: 16px;
+        }
+
+        /* GRID DE GALLOS */
+        .gallos-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .gallo-card {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .gallo-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .gallo-image {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+        }
+
+        .gallo-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .gallo-card:hover .gallo-image img {
+            transform: scale(1.05);
+        }
+
+        .status-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-disponible {
+            background: var(--success-color);
+            color: var(--white);
+        }
+
+        .status-vendido {
+            background: var(--gray-500);
+            color: var(--white);
+        }
+
+        .favorite-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(255,255,255,0.9);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--gray-600);
+        }
+
+        .favorite-btn:hover,
+        .favorite-btn.active {
+            background: var(--white);
+            color: var(--danger-color);
+            transform: scale(1.1);
+        }
+
+        .gallo-info {
+            padding: 16px;
+        }
+
+        .gallo-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 4px;
+        }
+
+        .gallo-breed {
+            color: var(--primary-color);
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .gallo-price {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--success-color);
+            margin-bottom: 8px;
+        }
+
+        .gallo-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: var(--gray-600);
+        }
+
+        .gallo-location {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            color: var(--gray-500);
+            margin-bottom: 12px;
+        }
+
+        .seller-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--gray-100);
+        }
+
+        .seller-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .seller-details {
+            flex: 1;
+        }
+
+        .seller-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .seller-rating {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            font-size: 12px;
+            color: var(--secondary-color);
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: var(--white);
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--gray-300);
+            color: var(--gray-600);
+        }
+
+        .btn-outline:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+        }
+
+        /* DETALLE DEL GALLO */
+        .detail-view {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .detail-gallery {
+            position: relative;
+            height: 300px;
+        }
+
+        .gallery-main {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .gallery-main img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .gallery-nav {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+        }
+
+        .gallery-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.5);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .gallery-dot.active {
+            background: var(--white);
+            transform: scale(1.2);
+        }
+
+        .detail-content {
+            padding: 20px;
+        }
+
+        .detail-header {
+            margin-bottom: 20px;
+        }
+
+        .detail-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 8px;
+        }
+
+        .detail-price {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--success-color);
+            margin-bottom: 16px;
+        }
+
+        .detail-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .meta-item {
+            text-align: center;
+            padding: 12px;
+            background: var(--gray-50);
+            border-radius: 8px;
+        }
+
+        .meta-label {
+            font-size: 12px;
+            color: var(--gray-500);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .meta-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .detail-description {
+            margin-bottom: 20px;
+            line-height: 1.6;
+            color: var(--gray-700);
+        }
+
+        .detail-seller {
+            background: var(--gray-50);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .detail-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn-large {
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* FORMULARIO DE PUBLICACIÓN */
+        .publish-form {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--gray-700);
+            font-size: 14px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: var(--transition);
+            background: var(--white);
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--gray-300);
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            background: var(--gray-50);
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background: rgba(211, 47, 47, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 2rem;
+            color: var(--gray-400);
+            margin-bottom: 12px;
+        }
+
+        .upload-text {
+            color: var(--gray-600);
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .upload-subtext {
+            color: var(--gray-500);
+            font-size: 12px;
+        }
+
+        /* CHAT */
+        .chat-container {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .chat-header {
+            background: var(--primary-color);
+            color: var(--white);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .message-sent {
+            background: var(--primary-color);
+            color: var(--white);
+            align-self: flex-end;
+            border-bottom-right-radius: 6px;
+        }
+
+        .message-received {
+            background: var(--gray-100);
+            color: var(--gray-800);
+            align-self: flex-start;
+            border-bottom-left-radius: 6px;
+        }
+
+        .message-time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+
+        .chat-input {
+            padding: 16px;
+            background: var(--gray-50);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--gray-300);
+            border-radius: 20px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .chat-send {
+            background: var(--primary-color);
+            color: var(--white);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .chat-send:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+        }
+
+        /* FILTROS */
+        .filters-container {
+            background: var(--white);
+            padding: 16px;
+            margin-bottom: 16px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .filter-select {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        /* BOTTOM NAVIGATION */
+        .bottom-nav {
+            background: var(--white);
+            border-top: 1px solid var(--gray-200);
+            padding: 8px 0;
+            display: flex;
+            justify-content: space-around;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 12px;
+            color: var(--gray-500);
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            min-width: 60px;
+        }
+
+        .nav-item.active {
+            color: var(--primary-color);
+        }
+
+        .nav-item i {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .nav-item span {
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        /* UTILIDADES */
+        .hidden {
+            display: none !important;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 16px;
+            padding-left: 4px;
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--gray-200);
+            margin: 20px 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-success {
+            background: var(--success-color);
+            color: var(--white);
+        }
+
+        .badge-warning {
+            background: var(--warning-color);
+            color: var(--white);
+        }
+
+        /* RESPONSIVE AJUSTES */
+        @media (max-width: 375px) {
+            .mobile-frame {
+                margin: 10px;
+                border-radius: 0;
+                padding: 0;
+            }
+            
+            .mobile-screen {
+                border-radius: 0;
+                height: 100vh;
+            }
+        }
+
+        /* ANIMACIONES */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        /* SCROLLBAR PERSONALIZADO */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--gray-300);
+            border-radius: 2px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--gray-400);
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-frame">
+        <div class="mobile-screen">
+            <!-- Barra de Estado -->
+            <div class="status-bar">
+                <div class="status-left">
+                    <span>9:41</span>
+                </div>
+                <div class="status-right">
+                    <i class="fas fa-signal"></i>
+                    <i class="fas fa-wifi"></i>
+                    <i class="fas fa-battery-three-quarters"></i>
+                </div>
+            </div>
+
+            <!-- Header de la App -->
+            <div class="app-header">
+                <div class="header-top">
+                    <div class="logo">
+                        <i class="fas fa-feather-alt"></i>
+                        <span>Marketplace Gallos</span>
+                    </div>
+                    <div class="header-actions">
+                        <button class="header-btn">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge">3</span>
+                        </button>
+                        <button class="header-btn">
+                            <i class="fas fa-user"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="search-container">
+                    <div style="position: relative;">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" class="search-box" placeholder="Buscar gallos por nombre, raza...">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navegación por Tabs -->
+            <div class="tab-navigation">
+                <div class="tab-item active" data-tab="explorar">
+                    <i class="fas fa-search"></i>
+                    <span>Explorar</span>
+                </div>
+                <div class="tab-item" data-tab="favoritos">
+                    <i class="fas fa-heart"></i>
+                    <span>Favoritos</span>
+                </div>
+                <div class="tab-item" data-tab="chat">
+                    <i class="fas fa-comments"></i>
+                    <span>Chats</span>
+                </div>
+                <div class="tab-item" data-tab="publicar">
+                    <i class="fas fa-plus"></i>
+                    <span>Vender</span>
+                </div>
+            </div>
+
+            <!-- Contenido Principal -->
+            <div class="main-content">
+                <!-- Vista Explorar -->
+                <div id="explorar-content" class="tab-content active">
+                    <!-- Filtros -->
+                    <div class="filters-container">
+                        <div class="filter-row">
+                            <select class="filter-select">
+                                <option>Todas las razas</option>
+                                <option>Kelso</option>
+                                <option>Hatch</option>
+                                <option>Sweater</option>
+                            </select>
+                            <select class="filter-select">
+                                <option>Precio</option>
+                                <option>Menor a $1,000</option>
+                                <option>$1,000 - $2,000</option>
+                                <option>Más de $2,000</option>
+                            </select>
+                        </div>
+                        <div class="filter-row">
+                            <select class="filter-select">
+                                <option>Ubicación</option>
+                                <option>Guadalajara</option>
+                                <option>CDMX</option>
+                                <option>Monterrey</option>
+                            </select>
+                            <select class="filter-select">
+                                <option>Estado</option>
+                                <option>Disponible</option>
+                                <option>Vendido</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h2 class="section-title">Gallos Destacados</h2>
+                    
+                    <!-- Grid de Gallos -->
+                    <div class="gallos-grid">
+                        <!-- Gallo 1 -->
+                        <div class="gallo-card">
+                            <div class="gallo-image">
+                                <img src="https://images.unsplash.com/photo-1590165482120-7d01a22d3e3c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Relámpago Dorado">
+                                <div class="status-badge status-disponible">Disponible</div>
+                                <button class="favorite-btn">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                            </div>
+                            <div class="gallo-info">
+                                <div class="gallo-name">Relámpago Dorado</div>
+                                <div class="gallo-breed">Línea Kelso</div>
+                                <div class="gallo-price">$1,200.00</div>
+                                <div class="gallo-details">
+                                    <span>18 meses</span>
+                                    <span>3.2 kg</span>
+                                </div>
+                                <div class="gallo-location">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>Guadalajara, Jalisco</span>
+                                </div>
+                                <div class="seller-info">
+                                    <div class="seller-avatar">CR</div>
+                                    <div class="seller-details">
+                                        <div class="seller-name">Criadero Real</div>
+                                        <div class="seller-rating">
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star-half-alt"></i>
+                                            <span>4.7</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-actions">
+                                    <button class="btn btn-primary" onclick="verDetalle(1)">
+                                        <i class="fas fa-eye"></i>
+                                        Ver Detalles
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gallo 2 -->
+                        <div class="gallo-card">
+                            <div class="gallo-image">
+                                <img src="https://images.unsplash.com/photo-1581337204873-ef36aa186caa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Guerrero Azteca">
+                                <div class="status-badge status-disponible">Disponible</div>
+                                <button class="favorite-btn">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                            </div>
+                            <div class="gallo-info">
+                                <div class="gallo-name">Guerrero Azteca</div>
+                                <div class="gallo-breed">Línea Hatch</div>
+                                <div class="gallo-price">$950.00</div>
+                                <div class="gallo-details">
+                                    <span>15 meses</span>
+                                    <span>3.0 kg</span>
+                                </div>
+                                <div class="gallo-location">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>Monterrey, N.L.</span>
+                                </div>
+                                <div class="seller-info">
+                                    <div class="seller-avatar">GA</div>
+                                    <div class="seller-details">
+                                        <div class="seller-name">Gallos Azteca</div>
+                                        <div class="seller-rating">
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="far fa-star"></i>
+                                            <span>4.2</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-actions">
+                                    <button class="btn btn-primary" onclick="verDetalle(2)">
+                                        <i class="fas fa-eye"></i>
+                                        Ver Detalles
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gallo 3 -->
+                        <div class="gallo-card">
+                            <div class="gallo-image">
+                                <img src="https://images.unsplash.com/photo-1559563362-c667ba5f5480?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Sultán Rojo">
+                                <div class="status-badge status-vendido">Vendido</div>
+                                <button class="favorite-btn">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                            </div>
+                            <div class="gallo-info">
+                                <div class="gallo-name">Sultán Rojo</div>
+                                <div class="gallo-breed">Línea Sweater</div>
+                                <div class="gallo-price">$1,500.00</div>
+                                <div class="gallo-details">
+                                    <span>24 meses</span>
+                                    <span>3.5 kg</span>
+                                </div>
+                                <div class="gallo-location">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>Ciudad de México</span>
+                                </div>
+                                <div class="seller-info">
+                                    <div class="seller-avatar">SR</div>
+                                    <div class="seller-details">
+                                        <div class="seller-name">Sultan Ranch</div>
+                                        <div class="seller-rating">
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <span>5.0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-actions">
+                                    <button class="btn btn-outline" disabled>
+                                        <i class="fas fa-check"></i>
+                                        Vendido
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gallo 4 -->
+                        <div class="gallo-card">
+                            <div class="gallo-image">
+                                <img src="https://images.unsplash.com/photo-1598892296780-5e0a6b4d1c4c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Fénix Plateado">
+                                <div class="status-badge status-disponible">Disponible</div>
+                                <button class="favorite-btn active">
+                                    <i class="fas fa-heart"></i>
+                                </button>
+                            </div>
+                            <div class="gallo-info">
+                                <div class="gallo-name">Fénix Plateado</div>
+                                <div class="gallo-breed">Línea Albany</div>
+                                <div class="gallo-price">$2,300.00</div>
+                                <div class="gallo-details">
+                                    <span>12 meses</span>
+                                    <span>2.8 kg</span>
+                                </div>
+                                <div class="gallo-location">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>Puebla, Pue.</span>
+                                </div>
+                                <div class="seller-info">
+                                    <div class="seller-avatar">FP</div>
+                                    <div class="seller-details">
+                                        <div class="seller-name">Fénix Premium</div>
+                                        <div class="seller-rating">
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star-half-alt"></i>
+                                            <span>4.8</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-actions">
+                                    <button class="btn btn-primary" onclick="verDetalle(4)">
+                                        <i class="fas fa-eye"></i>
+                                        Ver Detalles
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vista Detalle del Gallo -->
+                <div id="detalle-content" class="tab-content hidden">
+                    <div class="detail-view">
+                        <div class="detail-gallery">
+                            <div class="gallery-main">
+                                <img id="main-detail-image" src="https://images.unsplash.com/photo-1590165482120-7d01a22d3e3c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Gallo detalle">
+                            </div>
+                            <div class="gallery-nav">
+                                <div class="gallery-dot active" data-image="https://images.unsplash.com/photo-1590165482120-7d01a22d3e3c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"></div>
+                                <div class="gallery-dot" data-image="https://images.unsplash.com/photo-1559563362-c667ba5f5480?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"></div>
+                                <div class="gallery-dot" data-image="https://images.unsplash.com/photo-1598892296780-5e0a6b4d1c4c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-content">
+                            <div class="detail-header">
+                                <button class="btn btn-outline" onclick="volverExplorar()" style="margin-bottom: 16px;">
+                                    <i class="fas fa-arrow-left"></i>
+                                    Volver
+                                </button>
+                                <h1 class="detail-title">Relámpago Dorado</h1>
+                                <div class="detail-price">$1,200.00</div>
+                            </div>
+
+                            <div class="detail-meta">
+                                <div class="meta-item">
+                                    <div class="meta-label">Placa/Anillo</div>
+                                    <div class="meta-value">RDG-2023-045</div>
+                                </div>
+                                <div class="meta-item">
+                                    <div class="meta-label">Edad</div>
+                                    <div class="meta-value">18 meses</div>
+                                </div>
+                                <div class="meta-item">
+                                    <div class="meta-label">Peso</div>
+                                    <div class="meta-value">3.2 kg</div>
+                                </div>
+                                <div class="meta-item">
+                                    <div class="meta-label">Línea/Raza</div>
+                                    <div class="meta-value">Kelso</div>
+                                </div>
+                            </div>
+
+                            <div class="detail-description">
+                                <h3 style="margin-bottom: 12px; color: var(--gray-700);">Descripción</h3>
+                                <p>Relámpago Dorado es un gallo de combate excepcional de línea Kelso, con excelente genética y rendimiento comprobado. Criado con los más altos estándares de alimentación y cuidado.</p>
+                                <br>
+                                <p>Incluye certificado de pedigrí que detalla su linaje por tres generaciones. Vacunado y desparasitado según protocolos veterinarios.</p>
+                            </div>
+
+                            <div class="detail-seller">
+                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                    <div class="seller-avatar" style="width: 48px; height: 48px; font-size: 18px;">CR</div>
+                                    <div>
+                                        <div style="font-weight: 600; margin-bottom: 4px;">Criadero Real</div>
+                                        <div class="seller-rating">
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star-half-alt"></i>
+                                            <span>4.7 (23 reseñas)</span>
+                                        </div>
+                                        <div style="font-size: 13px; color: var(--gray-500); margin-top: 4px;">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                            Guadalajara, Jalisco
+                                        </div>
+                                    </div>
+                                </div>
+                                <p style="font-size: 14px; color: var(--gray-600);">Especialistas en gallos de combate de alta calidad con más de 15 años de experiencia.</p>
+                            </div>
+
+                            <div class="detail-actions">
+                                <button class="btn btn-primary btn-large" onclick="abrirChat()">
+                                    <i class="fas fa-comments"></i>
+                                    Contactar por Chat
+                                </button>
+                                <button class="btn btn-outline btn-large">
+                                    <i class="fas fa-phone"></i>
+                                    Llamar al Vendedor
+                                </button>
+                                <button class="btn btn-outline btn-large">
+                                    <i class="fas fa-heart"></i>
+                                    Añadir a Favoritos
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vista Favoritos -->
+                <div id="favoritos-content" class="tab-content hidden">
+                    <h2 class="section-title">Mis Favoritos</h2>
+                    <div class="gallos-grid">
+                        <div class="gallo-card">
+                            <div class="gallo-image">
+                                <img src="https://images.unsplash.com/photo-1598892296780-5e0a6b4d1c4c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Fénix Plateado">
+                                <div class="status-badge status-disponible">Disponible</div>
+                                <button class="favorite-btn active">
+                                    <i class="fas fa-heart"></i>
+                                </button>
+                            </div>
+                            <div class="gallo-info">
+                                <div class="gallo-name">Fénix Plateado</div>
+                                <div class="gallo-breed">Línea Albany</div>
+                                <div class="gallo-price">$2,300.00</div>
+                                <div class="gallo-details">
+                                    <span>12 meses</span>
+                                    <span>2.8 kg</span>
+                                </div>
+                                <div class="gallo-location">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>Puebla, Pue.</span>
+                                </div>
+                                <div class="seller-info">
+                                    <div class="seller-avatar">FP</div>
+                                    <div class="seller-details">
+                                        <div class="seller-name">Fénix Premium</div>
+                                        <div class="seller-rating">
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star-half-alt"></i>
+                                            <span>4.8</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-actions">
+                                    <button class="btn btn-primary">
+                                        <i class="fas fa-eye"></i>
+                                        Ver Detalles
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vista Chat -->
+                <div id="chat-content" class="tab-content hidden">
+                    <h2 class="section-title">Mis Conversaciones</h2>
+                    
+                    <!-- Lista de Chats -->
+                    <div id="chat-list" class="chat-list">
+                        <div class="chat-item" onclick="abrirConversacion('CR')">
+                            <div class="seller-avatar">CR</div>
+                            <div class="chat-info">
+                                <div class="chat-name">Criadero Real</div>
+                                <div class="chat-preview">¿Podrías enviarme más fotos del gallo?</div>
+                                <div class="chat-time">10:35 AM</div>
+                            </div>
+                            <div class="unread-badge">2</div>
+                        </div>
+                        
+                        <div class="chat-item" onclick="abrirConversacion('GA')">
+                            <div class="seller-avatar">GA</div>
+                            <div class="chat-info">
+                                <div class="chat-name">Gallos Azteca</div>
+                                <div class="chat-preview">Perfecto, quedamos mañana a las 3pm</div>
+                                <div class="chat-time">Ayer</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ventana de Chat -->
+                    <div id="chat-window" class="chat-container hidden">
+                        <div class="chat-header">
+                            <button onclick="cerrarChat()" style="background: none; border: none; color: white; margin-right: 12px;">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                            <div class="seller-avatar" style="width: 36px; height: 36px;">CR</div>
+                            <div>
+                                <div style="font-weight: 600;">Criadero Real</div>
+                                <div style="font-size: 12px; opacity: 0.8;">En línea</div>
+                            </div>
+                        </div>
+                        
+                        <div class="chat-messages" id="chat-messages-container">
+                            <div class="message message-received">
+                                ¡Hola! Estoy interesado en tu gallo "Relámpago Dorado". ¿Todavía está disponible?
+                                <div class="message-time">10:25 AM</div>
+                            </div>
+                            
+                            <div class="message message-sent">
+                                Sí, aún está disponible. ¿Te gustaría más información?
+                                <div class="message-time">10:28 AM</div>
+                            </div>
+                            
+                            <div class="message message-received">
+                                Me gustaría saber si tienes el pedigrí disponible para ver.
+                                <div class="message-time">10:30 AM</div>
+                            </div>
+                            
+                            <div class="message message-sent">
+                                Claro, te lo puedo enviar por aquí. ¿Tienes WhatsApp para enviarte el documento más fácilmente?
+                                <div class="message-time">10:32 AM</div>
+                            </div>
+                            
+                            <div class="message message-received">
+                                Sí, mi número es 55 1234 5678. ¿Podrías enviarme también más fotos?
+                                <div class="message-time">10:35 AM</div>
+                            </div>
+                        </div>
+                        
+                        <div class="chat-input">
+                            <input type="text" id="message-input" placeholder="Escribe un mensaje...">
+                            <button class="chat-send" onclick="enviarMensaje()">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vista Publicar -->
+                <div id="publicar-content" class="tab-content hidden">
+                    <h2 class="section-title">Publicar Nuevo Gallo</h2>
+                    
+                    <div class="publish-form">
+                        <div class="form-group">
+                            <label class="form-label">Nombre/Apodo del Gallo</label>
+                            <input type="text" class="form-input" placeholder="Ej: Relámpago Dorado">
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Placa/Anillo</label>
+                                <input type="text" class="form-input" placeholder="RDG-2023-045">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Edad</label>
+                                <input type="text" class="form-input" placeholder="18 meses">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Peso (kg)</label>
+                                <input type="number" class="form-input" placeholder="3.2">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Línea/Raza</label>
+                                <select class="form-select">
+                                    <option>Seleccionar...</option>
+                                    <option>Kelso</option>
+                                    <option>Hatch</option>
+                                    <option>Sweater</option>
+                                    <option>Albany</option>
+                                    <option>Butcher</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Precio (MXN)</label>
+                            <input type="number" class="form-input" placeholder="1200">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Ubicación</label>
+                            <select class="form-select">
+                                <option>Seleccionar estado...</option>
+                                <option>Aguascalientes</option>
+                                <option>Jalisco</option>
+                                <option>Ciudad de México</option>
+                                <option>Nuevo León</option>
+                                <option>Puebla</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Descripción</label>
+                            <textarea class="form-textarea" placeholder="Describe las características, historia y logros del gallo..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Fotos y Video</label>
+                            <div class="upload-area">
+                                <div class="upload-icon">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </div>
+                                <div class="upload-text">Toca para subir fotos</div>
+                                <div class="upload-subtext">Máximo 10 fotos y 1 video (60 seg)</div>
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-primary btn-large" onclick="publicarGallo()">
+                            <i class="fas fa-feather-alt"></i>
+                            Publicar Gallo
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navegación Inferior -->
+            <div class="bottom-nav">
+                <a href="#" class="nav-item active" data-tab="explorar">
+                    <i class="fas fa-search"></i>
+                    <span>Explorar</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="favoritos">
+                    <i class="fas fa-heart"></i>
+                    <span>Favoritos</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="chat">
+                    <i class="fas fa-comments"></i>
+                    <span>Chats</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="publicar">
+                    <i class="fas fa-plus"></i>
+                    <span>Vender</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // VARIABLES GLOBALES
+        let currentTab = 'explorar';
+        let currentChatUser = null;
+
+        // NAVEGACIÓN ENTRE TABS
+        function switchTab(tabName) {
+            // Ocultar todos los contenidos
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Mostrar el contenido seleccionado
+            document.getElementById(tabName + '-content').classList.remove('hidden');
+            
+            // Actualizar navegación superior
+            document.querySelectorAll('.tab-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            
+            // Actualizar navegación inferior
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`.nav-item[data-tab="${tabName}"]`).classList.add('active');
+            
+            currentTab = tabName;
+        }
+
+        // EVENT LISTENERS PARA NAVEGACIÓN
+        document.querySelectorAll('.tab-item, .nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const tab = item.getAttribute('data-tab');
+                if (tab) {
+                    switchTab(tab);
+                }
+            });
+        });
+
+        // FAVORITOS
+        document.querySelectorAll('.favorite-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                btn.classList.toggle('active');
+                const icon = btn.querySelector('i');
+                if (btn.classList.contains('active')) {
+                    icon.className = 'fas fa-heart';
+                } else {
+                    icon.className = 'far fa-heart';
+                }
+            });
+        });
+
+        // GALERÍA DE IMÁGENES
+        document.querySelectorAll('.gallery-dot').forEach(dot => {
+            dot.addEventListener('click', () => {
+                // Remover active de todos los dots
+                document.querySelectorAll('.gallery-dot').forEach(d => d.classList.remove('active'));
+                
+                // Agregar active al dot clickeado
+                dot.classList.add('active');
+                
+                // Cambiar imagen principal
+                const newImage = dot.getAttribute('data-image');
+                document.getElementById('main-detail-image').src = newImage;
+            });
+        });
+
+        // FUNCIONES DE NAVEGACIÓN
+        function verDetalle(galloId) {
+            document.getElementById('explorar-content').classList.add('hidden');
+            document.getElementById('detalle-content').classList.remove('hidden');
+        }
+
+        function volverExplorar() {
+            document.getElementById('detalle-content').classList.add('hidden');
+            document.getElementById('explorar-content').classList.remove('hidden');
+        }
+
+        function abrirChat() {
+            switchTab('chat');
+            setTimeout(() => {
+                abrirConversacion('CR');
+            }, 100);
+        }
+
+        function abrirConversacion(userId) {
+            document.getElementById('chat-list').classList.add('hidden');
+            document.getElementById('chat-window').classList.remove('hidden');
+            currentChatUser = userId;
+        }
+
+        function cerrarChat() {
+            document.getElementById('chat-window').classList.add('hidden');
+            document.getElementById('chat-list').classList.remove('hidden');
+            currentChatUser = null;
+        }
+
+        // CHAT FUNCIONALIDAD
+        function enviarMensaje() {
+            const input = document.getElementById('message-input');
+            const mensaje = input.value.trim();
+            
+            if (mensaje) {
+                const chatContainer = document.getElementById('chat-messages-container');
+                
+                // Crear elemento de mensaje
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message', 'message-sent');
+                messageDiv.innerHTML = `
+                    ${mensaje}
+                    <div class="message-time">${getCurrentTime()}</div>
+                `;
+                
+                chatContainer.appendChild(messageDiv);
+                input.value = '';
+                
+                // Scroll al final
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                
+                // Simular respuesta
+                setTimeout(simularRespuesta, 2000);
+            }
+        }
+
+        function simularRespuesta() {
+            const respuestas = [
+                "Gracias por tu mensaje. ¿En qué más puedo ayudarte?",
+                "Estoy disponible para responder tus preguntas",
+                "¿Te gustaría programar una visita para ver al gallo?",
+                "Puedo enviarte más fotos si lo deseas"
+            ];
+            
+            const respuestaRandom = respuestas[Math.floor(Math.random() * respuestas.length)];
+            const chatContainer = document.getElementById('chat-messages-container');
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', 'message-received');
+            messageDiv.innerHTML = `
+                ${respuestaRandom}
+                <div class="message-time">${getCurrentTime()}</div>
+            `;
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function getCurrentTime() {
+            const now = new Date();
+            return `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+        }
+
+        // PUBLICAR GALLO
+        function publicarGallo() {
+            // Simular loading
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publicando...';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                alert('¡Gallo publicado exitosamente! Será revisado por nuestro equipo antes de aparecer en el marketplace.');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                
+                // Limpiar formulario
+                document.querySelectorAll('.form-input, .form-select, .form-textarea').forEach(input => {
+                    input.value = '';
+                });
+            }, 2000);
+        }
+
+        // ENTER PARA ENVIAR MENSAJE
+        document.getElementById('message-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                enviarMensaje();
+            }
+        });
+
+        // BÚSQUEDA
+        document.querySelector('.search-box').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            // Aquí implementarías la lógica de búsqueda
+            console.log('Buscando:', searchTerm);
+        });
+
+        // FILTROS
+        document.querySelectorAll('.filter-select').forEach(select => {
+            select.addEventListener('change', (e) => {
+                // Aquí implementarías la lógica de filtrado
+                console.log('Filtro cambiado:', e.target.value);
+            });
+        });
+
+        // ANIMACIONES DE ENTRADA
+        function animateCards() {
+            const cards = document.querySelectorAll('.gallo-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.3s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        }
+
+        // INICIALIZACIÓN
+        document.addEventListener('DOMContentLoaded', () => {
+            // Animar cards al cargar
+            setTimeout(animateCards, 100);
+            
+            // Configurar pull-to-refresh (simulado)
+            let startY = 0;
+            let currentY = 0;
+            let isRefreshing = false;
+            
+            const mainContent = document.querySelector('.main-content');
+            
+            mainContent.addEventListener('touchstart', (e) => {
+                startY = e.touches[0].clientY;
+            });
+            
+            mainContent.addEventListener('touchmove', (e) => {
+                if (mainContent.scrollTop === 0 && !isRefreshing) {
+                    currentY = e.touches[0].clientY;
+                    const diff = currentY - startY;
+                    
+                    if (diff > 50) {
+                        // Mostrar indicador de refresh
+                        console.log('Pull to refresh triggered');
+                    }
+                }
+            });
+            
+            mainContent.addEventListener('touchend', () => {
+                if (currentY - startY > 100 && mainContent.scrollTop === 0 && !isRefreshing) {
+                    // Ejecutar refresh
+                    refreshContent();
+                }
+                startY = 0;
+                currentY = 0;
+            });
+        });
+
+        function refreshContent() {
+            isRefreshing = true;
+            
+            // Simular carga de datos
+            setTimeout(() => {
+                console.log('Contenido actualizado');
+                isRefreshing = false;
+                animateCards();
+            }, 1500);
+        }
+
+        // GESTIÓN DE ESTADOS DE CONEXIÓN
+        window.addEventListener('online', () => {
+            console.log('Conexión restaurada');
+            // Mostrar notificación de conexión
+        });
+
+        window.addEventListener('offline', () => {
+            console.log('Sin conexión');
+            // Mostrar notificación de sin conexión
+        });
+
+        // FUNCIÓN PARA COMPARTIR
+        function compartirGallo(galloId) {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Gallo en venta - Marketplace Gallos',
+                    text: 'Mira este increíble gallo que encontré',
+                    url: window.location.href
+                });
+            } else {
+                // Fallback para navegadores que no soportan Web Share API
+                const url = window.location.href;
+                navigator.clipboard.writeText(url).then(() => {
+                    alert('Enlace copiado al portapapeles');
+                });
+            }
+        }
+
+        // CONFIGURACIÓN DE PWA
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Mostrar botón de instalación personalizado
+            const installBtn = document.createElement('button');
+            installBtn.className = 'btn btn-outline';
+            installBtn.innerHTML = '<i class="fas fa-download"></i> Instalar App';
+            installBtn.addEventListener('click', () => {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('Usuario aceptó instalar la app');
+                    }
+                    deferredPrompt = null;
+                });
+            });
+        });
+
+        // NOTIFICACIONES PUSH (simuladas)
+        function solicitarNotificaciones() {
+            if ('Notification' in window) {
+                Notification.requestPermission().then((permission) => {
+                    if (permission === 'granted') {
+                        console.log('Notificaciones habilitadas');
+                    }
+                });
+            }
+        }
+
+        // GEOLOCALIZACIÓN PARA BÚSQUEDA CERCANA
+        function buscarGallosCercanos() {
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    console.log('Ubicación:', lat, lon);
+                    // Implementar búsqueda por ubicación
+                });
+            }
+        }
+
+        // MANEJO DE IMÁGENES LAZY LOADING
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    img.classList.remove('lazy');
+                    observer.unobserve(img);
+                }
+            });
+        });
+
+        // Aplicar lazy loading a imágenes
+        document.querySelectorAll('img[data-src]').forEach(img => {
+            imageObserver.observe(img);
+        });
+
+        // HAPTIC FEEDBACK (para dispositivos compatibles)
+        function vibrate(pattern = [100]) {
+            if ('vibrate' in navigator) {
+                navigator.vibrate(pattern);
+            }
+        }
+
+        // Agregar vibración a botones importantes
+        document.querySelectorAll('.btn-primary').forEach(btn => {
+            btn.addEventListener('click', () => {
+                vibrate([50]);
+            });
+        });
+
+        // CACHÉ DE DATOS OFFLINE
+        const CACHE_NAME = 'marketplace-gallos-v1';
+        const urlsToCache = [
+            '/',
+            '/css/styles.css',
+            '/js/app.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
+        ];
+
+        // PERFORMANCE MONITORING
+        function measurePerformance() {
+            if ('performance' in window) {
+                window.addEventListener('load', () => {
+                    const perfData = performance.getEntriesByType('navigation')[0];
+                    console.log('Tiempo de carga:', perfData.loadEventEnd - perfData.fetchStart, 'ms');
+                });
+            }
+        }
+
+        measurePerformance();
+
+        // DARK MODE TOGGLE (futuro)
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        }
+
+        // Restaurar tema al cargar
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+        }
+    </script>
+
+    <!-- Estilos adicionales para chat -->
+    <style>
+        .chat-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            background: var(--gray-200);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        .chat-item {
+            background: var(--white);
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .chat-item:hover {
+            background: var(--gray-50);
+        }
+
+        .chat-info {
+            flex: 1;
+        }
+
+        .chat-name {
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 4px;
+        }
+
+        .chat-preview {
+            font-size: 14px;
+            color: var(--gray-600);
+            margin-bottom: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .chat-time {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .unread-badge {
+            background: var(--primary-color);
+            color: var(--white);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* Mejoras visuales adicionales */
+        .gallo-card {
+            transition: var(--transition);
+            border: 1px solid transparent;
+        }
+
+        .gallo-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.1);
+        }
+
+        /* Loading states */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--gray-800);
+            color: var(--white);
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        /* Skeleton loading */
+        .skeleton {
+            background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 4px;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Mejoras de accesibilidad */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Focus states mejorados */
+        .btn:focus,
+        .header-btn:focus,
+        .nav-item:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        /* Estados disabled */
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Animación de pull-to-refresh */
+        .refresh-indicator {
+            text-align: center;
+            padding: 20px;
+            color: var(--gray-500);
+            transform: translateY(-100px);
+            transition: transform 0.3s ease;
+        }
+
+        .refresh-indicator.show {
+            transform: translateY(0);
+        }
+    </style>
+</body>
+</html>

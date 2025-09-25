@@ -246,34 +246,74 @@ class _PlanCardState extends State<PlanCard>
 
   Widget _buildCaracteristicas() {
     final caracteristicas = [
+      // 🥇 PRIMERA PRIORIDAD: STREAMING
+      _CaracteristicaPlan(
+        icono: '📺',
+        titulo: 'Streaming',
+        valor: _getAccesoStreaming(),
+        esDestacado: true,
+      ),
+
+      // 🥈 SEGUNDA PRIORIDAD: MARKETPLACE (basado en videos_ilimitados)
+      _CaracteristicaPlan(
+        icono: '🏪',
+        titulo: 'Marketplace',
+        valor: widget.plan.videosIlimitados ? 'Acceso completo' : 'Limitado',
+        esDestacado: widget.plan.videosIlimitados,
+      ),
+
+      // 🥉 RESTO DE CARACTERÍSTICAS EN ORDEN
       _CaracteristicaPlan(
         icono: '🐓',
         titulo: 'Gallos',
-        valor: widget.plan.gallosMaximo == -1 
-            ? 'Ilimitados' 
+        valor: widget.plan.gallosMaximo == -1
+            ? 'Ilimitados'
             : '${widget.plan.gallosMaximo}',
-      ),
-      _CaracteristicaPlan(
-        icono: '🏋️',
-        titulo: 'Entrenamientos',
-        valor: widget.plan.topesPorGallo == -1 
-            ? 'Ilimitados' 
-            : '${widget.plan.topesPorGallo} por gallo',
       ),
       _CaracteristicaPlan(
         icono: '🥊',
         titulo: 'Peleas',
-        valor: widget.plan.peleasPorGallo == -1 
-            ? 'Ilimitadas' 
+        valor: widget.plan.peleasPorGallo == -1
+            ? 'Ilimitadas'
             : '${widget.plan.peleasPorGallo} por gallo',
+      ),
+      _CaracteristicaPlan(
+        icono: '🏋️',
+        titulo: 'Entrenamientos',
+        valor: widget.plan.topesPorGallo == -1
+            ? 'Ilimitados'
+            : '${widget.plan.topesPorGallo} por gallo',
       ),
       _CaracteristicaPlan(
         icono: '💉',
         titulo: 'Vacunas',
-        valor: widget.plan.vacunasPorGallo == -1 
-            ? 'Ilimitadas' 
+        valor: widget.plan.vacunasPorGallo == -1
+            ? 'Ilimitadas'
             : '${widget.plan.vacunasPorGallo} por gallo',
       ),
+
+      // 📊 CARACTERÍSTICAS ADICIONALES DE LA BD
+      if (widget.plan.soportePremium)
+        _CaracteristicaPlan(
+          icono: '🎧',
+          titulo: 'Soporte Premium',
+          valor: 'Incluido',
+        ),
+
+      if (widget.plan.respaldoNube)
+        _CaracteristicaPlan(
+          icono: '☁️',
+          titulo: 'Respaldo Nube',
+          valor: 'Automático',
+        ),
+
+      if (widget.plan.estadisticasAvanzadas)
+        _CaracteristicaPlan(
+          icono: '📈',
+          titulo: 'Estadísticas',
+          valor: 'Avanzadas',
+          esDestacado: true,
+        ),
     ];
 
     return Column(
@@ -296,13 +336,26 @@ class _PlanCardState extends State<PlanCard>
   }
 
   Widget _buildCaracteristicaItem(_CaracteristicaPlan caracteristica) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+      margin: const EdgeInsets.symmetric(vertical: 2),
+      decoration: caracteristica.esDestacado
+          ? BoxDecoration(
+              color: _getPlanColor().withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: _getPlanColor().withOpacity(0.3),
+                width: 1,
+              ),
+            )
+          : null,
       child: Row(
         children: [
           Text(
             caracteristica.icono,
-            style: const TextStyle(fontSize: 20),
+            style: TextStyle(
+              fontSize: caracteristica.esDestacado ? 22 : 20,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -311,17 +364,35 @@ class _PlanCardState extends State<PlanCard>
               children: [
                 Text(
                   caracteristica.titulo,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                  style: TextStyle(
+                    fontSize: caracteristica.esDestacado ? 17 : 16,
+                    fontWeight: caracteristica.esDestacado
+                        ? FontWeight.w600
+                        : FontWeight.w500,
+                    color: caracteristica.esDestacado
+                        ? _getPlanColor()
+                        : Colors.black87,
                   ),
                 ),
-                Text(
-                  caracteristica.valor,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: _getPlanColor(),
+                Container(
+                  padding: caracteristica.esDestacado
+                      ? const EdgeInsets.symmetric(horizontal: 8, vertical: 2)
+                      : EdgeInsets.zero,
+                  decoration: caracteristica.esDestacado
+                      ? BoxDecoration(
+                          color: _getPlanColor(),
+                          borderRadius: BorderRadius.circular(12),
+                        )
+                      : null,
+                  child: Text(
+                    caracteristica.valor,
+                    style: TextStyle(
+                      fontSize: caracteristica.esDestacado ? 13 : 14,
+                      fontWeight: FontWeight.bold,
+                      color: caracteristica.esDestacado
+                          ? Colors.white
+                          : _getPlanColor(),
+                    ),
                   ),
                 ),
               ],
@@ -491,6 +562,12 @@ class _PlanCardState extends State<PlanCard>
         return '📋';
     }
   }
+
+  /// 📺 Obtener período de acceso a streaming desde datos de BD
+  String _getAccesoStreaming() {
+    // ✅ Usar duracionStreaming del modelo que lee desde BD
+    return widget.plan.duracionStreaming;
+  }
 }
 
 // ========================================
@@ -501,10 +578,12 @@ class _CaracteristicaPlan {
   final String icono;
   final String titulo;
   final String valor;
+  final bool esDestacado;
 
   _CaracteristicaPlan({
     required this.icono,
     required this.titulo,
     required this.valor,
+    this.esDestacado = false,
   });
 }

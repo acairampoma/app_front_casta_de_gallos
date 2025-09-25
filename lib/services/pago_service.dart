@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -17,11 +18,23 @@ class PagoService {
   static Future<Map<String, String>> _getAuthHeaders() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('access_token');
-    
+
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
+
+  // 🔑 Headers para multipart (sin Content-Type)
+  static Future<Map<String, String>> _getMultipartAuthHeaders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('access_token');
+
+    return {
+      'Accept': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+      // NO incluir Content-Type para multipart
     };
   }
 
@@ -131,50 +144,93 @@ class PagoService {
   static Future<String> subirComprobante(int pagoId, XFile imagen) async {
     try {
       print('📸 [PagoService] Subiendo comprobante para pago ID: $pagoId');
-      
+      print('📸 [PagoService] Ruta de imagen: ${imagen.path}');
+      print('📸 [PagoService] Nombre: ${imagen.name}');
+
+      // 🔍 Validar que el archivo existe
+      final file = File(imagen.path);
+      if (!await file.exists()) {
+        throw PagoException('El archivo de imagen no existe en la ruta especificada', 400);
+      }
+
+      // 🔍 Validar tamaño del archivo
+      final fileSize = await file.length();
+      print('📸 [PagoService] Tamaño del archivo: ${fileSize} bytes');
+      if (fileSize > 10 * 1024 * 1024) { // 10MB máximo
+        throw PagoException('La imagen es demasiado grande (máximo 10MB)', 400);
+      }
+      if (fileSize == 0) {
+        throw PagoException('El archivo de imagen está vacío', 400);
+      }
+
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('access_token');
-      
+
       if (token == null) {
         throw PagoException('Token de autenticación no encontrado', 401);
       }
 
-      // Crear multipart request (IGUAL que foto_service.dart)
+      // Crear multipart request
       final uri = Uri.parse('$baseUrl/api/v1/pagos/$pagoId/subir-comprobante');
       final request = http.MultipartRequest('POST', uri);
-      
-      // Headers completos (IGUAL que foto_service.dart)
-      final headers = await _getAuthHeaders();
+
+      // ✅ HEADERS CORRECTOS PARA MULTIPART (sin Content-Type)
+      final headers = await _getMultipartAuthHeaders();
       request.headers.addAll(headers);
       
-      print('📸 [PagoService] Subiendo comprobante con fromPath...');
-      
-      // Agregar archivo usando fromPath con el campo correcto del backend
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          'comprobante', // ✅ CORRECTO: Coincide con backend FastAPI
-          imagen.path,
-          filename: 'comprobante_${pagoId}_${DateTime.now().millisecondsSinceEpoch}.jpg',
-        ),
+      print('📸 [PagoService] Preparando archivo multipart...');
+
+      // 🔍 Detectar tipo MIME basado en extensión
+      String? mimeType;
+      final extension = imagen.path.toLowerCase().split('.').last;
+      switch (extension) {
+        case 'jpg':
+        case 'jpeg':
+          mimeType = 'image/jpeg';
+          break;
+        case 'png':
+          mimeType = 'image/png';
+          break;
+        case 'webp':
+          mimeType = 'image/webp';
+          break;
+        default:
+          mimeType = 'image/jpeg'; // Fallback
+      }
+
+      print('📸 [PagoService] Extensión detectada: $extension, MIME: $mimeType');
+
+      // ✅ Crear MultipartFile con tipo MIME explícito
+      final multipartFile = await http.MultipartFile.fromPath(
+        'comprobante', // Campo esperado por el backend
+        imagen.path,
+        filename: 'comprobante_${pagoId}_${DateTime.now().millisecondsSinceEpoch}.$extension',
+        contentType: MediaType('image', extension == 'png' ? 'png' : 'jpeg'),
       );
-      
-      print('📸 [PagoService] Archivo preparado con fromPath');
+
+      request.files.add(multipartFile);
+      print('📸 [PagoService] Archivo agregado: ${multipartFile.filename} (${multipartFile.contentType})');
 
       // Enviar request
+      print('📡 [PagoService] Enviando petición multipart...');
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
 
       print('📡 Status Code: ${response.statusCode}');
+      print('📡 Response Body: ${response.body}');
+      print('📡 Response Headers: ${response.headers}');
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
         final comprobanteUrl = jsonData['comprobante_url'] ?? '';
-        
+
         print('✅ Comprobante subido exitosamente');
         print('🔗 URL: $comprobanteUrl');
-        
+
         return comprobanteUrl;
       } else {
+        print('❌ [PagoService] Error ${response.statusCode}');
+        print('❌ [PagoService] Body: ${response.body}');
         throw PagoException('Error ${response.statusCode}: ${response.body}', response.statusCode);
       }
     } catch (e) {

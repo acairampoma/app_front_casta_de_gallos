@@ -38,9 +38,12 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
   QRYapeResponse? _qrResponse;
   XFile? _comprobanteImagen;
   StreamSubscription<PagoPendiente>? _pollingSubscription;
-  
+
   bool _isLoadingQR = true;
   bool _isConfirmandoPago = false;
+  bool _isSubiendoComprobante = false;
+  bool _comprobanteSubido = false;
+  String? _comprobanteUrl;
   String? _error;
   PagoPendiente? _estadoPago;
 
@@ -506,7 +509,7 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
             children: [
               const Text('Número de Yape:'),
               Text(
-                _qrResponse?.numeroYape ?? '999-999-999',
+                _qrResponse?.numeroYape ?? '993-592-328',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
@@ -550,19 +553,21 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    '📸 Paso 2: Comprobante (Opcional)',
+                    '📸 Paso 2: Comprobante (OBLIGATORIO)',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
+                      color: Colors.red,
                     ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Puedes subir una foto del comprobante de Yape o continuar sin él',
+                    'Debes subir una foto del comprobante de Yape para continuar',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.grey.shade600,
+                      color: Colors.red.shade600,
+                      fontWeight: FontWeight.w500,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -584,7 +589,7 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
       onTap: _seleccionarComprobante,
       child: Container(
         width: double.infinity,
-        height: 200,
+        height: 140, // 👆 Reducido de 200 a 140
         decoration: BoxDecoration(
           color: Colors.grey.shade100,
           borderRadius: BorderRadius.circular(12),
@@ -605,11 +610,16 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
       child: Stack(
-        fit: StackFit.expand,
         children: [
-          Image.file(
-            File(_comprobanteImagen!.path),
-            fit: BoxFit.cover,
+          // 📏 Imagen centrada y compacta
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            child: Image.file(
+              File(_comprobanteImagen!.path),
+              fit: BoxFit.contain, // 👆 Cambiado de cover a contain
+              alignment: Alignment.center,
+            ),
           ),
           Positioned(
             top: 8,
@@ -641,23 +651,23 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
       children: [
         Icon(
           Icons.add_photo_alternate,
-          size: 64,
+          size: 48, // 👆 Reducido de 64 a 48
           color: Colors.grey.shade400,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8), // 👆 Reducido de 12 a 8
         Text(
           'Toca para seleccionar\ncomprobante de pago',
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 14, // 👆 Reducido de 16 a 14
             color: Colors.grey.shade600,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4), // 👆 Reducido de 8 a 4
         Text(
-          'JPG, PNG (máx. 5MB)',
+          'JPG, PNG (máx. 10MB)',
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 11, // 👆 Reducido de 12 a 11
             color: Colors.grey.shade500,
           ),
         ),
@@ -760,7 +770,14 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
           _buildResumenRow('Monto:', 'S/. ${widget.plan.precio.toStringAsFixed(2)}'),
           if (_referenciaController.text.isNotEmpty)
             _buildResumenRow('Referencia:', _referenciaController.text),
-          _buildResumenRow('Comprobante:', _comprobanteImagen != null ? 'Adjuntado' : 'No adjuntado'),
+          _buildResumenRow(
+            'Comprobante:',
+            _comprobanteSubido
+              ? '✅ Subido Exitosamente'
+              : _comprobanteImagen != null
+                ? '⏳ Listo para Subir'
+                : '❌ REQUERIDO'
+          ),
         ],
       ),
     );
@@ -925,7 +942,7 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
               child: ElevatedButton(
                 onPressed: _getNextButtonAction(),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: _getNextButtonAction() != null ? AppColors.primary : Colors.grey,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
@@ -962,14 +979,16 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
     try {
       final imagen = await _imagePicker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 1024,
-        maxHeight: 1024,
-        imageQuality: 80,
+        maxWidth: 800,  // 👆 Reducido de 1024 a 800
+        maxHeight: 800, // 👆 Reducido de 1024 a 800
+        imageQuality: 75, // 👆 Reducido de 80 a 75 para menor peso
       );
 
       if (imagen != null) {
         setState(() {
           _comprobanteImagen = imagen;
+          _comprobanteSubido = false; // Reset estado subida
+          _comprobanteUrl = null;
         });
         HapticFeedback.lightImpact();
       }
@@ -978,49 +997,93 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
     }
   }
 
+  /// 📸 FLUJO ROBUSTO: Subir comprobante en paso 2
+  Future<void> _subirComprobanteYContinuar() async {
+    if (_qrResponse == null || _comprobanteImagen == null) return;
+
+    try {
+      setState(() => _isSubiendoComprobante = true);
+
+      print('📸 [ProcesoPago] === SUBIENDO COMPROBANTE EN PASO 2 ===');
+      print('📸 [ProcesoPago] Pago ID: ${_qrResponse!.pagoId}');
+
+      // Subir comprobante usando el endpoint existente
+      final comprobanteUrl = await PagoService.subirComprobante(
+        _qrResponse!.pagoId,
+        _comprobanteImagen!
+      );
+
+      setState(() {
+        _comprobanteSubido = true;
+        _comprobanteUrl = comprobanteUrl;
+      });
+
+      print('✅ [ProcesoPago] Comprobante subido exitosamente: $comprobanteUrl');
+
+      // Feedback de éxito
+      HapticFeedback.mediumImpact();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✅ Comprobante subido exitosamente'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // Pequeño delay para que el usuario vea el éxito
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // Continuar al paso 3
+      _tabController.animateTo(2);
+
+    } catch (e) {
+      print('❌ [ProcesoPago] Error subiendo comprobante: $e');
+      _mostrarError('Error subiendo comprobante: $e\n\nPor favor, verifica tu conexión e inténtalo de nuevo.');
+    } finally {
+      setState(() => _isSubiendoComprobante = false);
+    }
+  }
+
+  /// 🚀 FLUJO ROBUSTO: Solo confirmar pago (imagen ya subida en paso 2)
   Future<void> _confirmarPago() async {
     if (_qrResponse == null) return;
+
+    // ✅ VALIDACIÓN: El comprobante debe estar subido
+    if (!_comprobanteSubido || _comprobanteUrl == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('❌ El comprobante debe estar subido antes de confirmar'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
 
     try {
       setState(() => _isConfirmandoPago = true);
 
-      // Primero confirmar el pago (sin imagen)
+      print('🚀 [ProcesoPago] === CONFIRMANDO PAGO (COMPROBANTE YA SUBIDO) ===');
+      print('📸 [ProcesoPago] URL del comprobante: $_comprobanteUrl');
+
+      // Solo confirmar el pago - la imagen ya está subida
       await PagoService.confirmarPago(
         pagoId: _qrResponse!.pagoId,
-        referenciaYape: _referenciaController.text.trim().isEmpty 
-            ? null 
+        referenciaYape: _referenciaController.text.trim().isEmpty
+            ? null
             : _referenciaController.text.trim(),
-        comprobanteImagen: null, // No enviar imagen aquí
+        comprobanteImagen: null, // No necesario, ya subido en paso 2
       );
 
-      // Luego subir el comprobante por separado si existe
-      if (_comprobanteImagen != null) {
-        try {
-          print('📸 [ProcesoPago] Subiendo comprobante...');
-          await PagoService.subirComprobante(_qrResponse!.pagoId, _comprobanteImagen!);
-          print('✅ [ProcesoPago] Comprobante subido exitosamente');
-        } catch (e) {
-          print('⚠️ [ProcesoPago] Error subiendo comprobante (continuando sin él): $e');
-          // ✅ CAMBIO: No fallar, solo mostrar advertencia
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('⚠️ No se pudo subir el comprobante, pero tu pago fue registrado'),
-                backgroundColor: Colors.orange,
-                duration: Duration(seconds: 3),
-              ),
-            );
-          }
-        }
-      }
+      print('✅ [ProcesoPago] Pago confirmado exitosamente');
 
       HapticFeedback.mediumImpact();
-      
+
       // 🔔 ENVIAR NOTIFICACIÓN PUSH AL ADMIN
       try {
         final currentUser = AuthService.instance.currentUser;
         final currentProfile = AuthService.instance.currentProfile;
-        
+
         if (currentUser != null) {
           await FirebaseNotificationService.notificarSuscripcionAAdmin(
             nombreUsuario: currentProfile?.nombreCompleto ?? currentUser.email,
@@ -1197,22 +1260,21 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
           setState(() => _isConfirmandoPago = false);
         };
       case 1:
-        // ✅ CAMBIO: Permitir continuar sin foto
-        return () async {
-          // Vibración y feedback
-          HapticFeedback.lightImpact();
-          setState(() => _isConfirmandoPago = true);
-          
-          // Pequeña animación de carga
-          await Future.delayed(const Duration(milliseconds: 300));
-          
-          // Cambiar de tab
-          _tabController.animateTo(2);
-          
-          setState(() => _isConfirmandoPago = false);
-        };
+        // ✅ FLUJO ROBUSTO: Subir imagen PRIMERO en paso 2
+        return _comprobanteImagen != null && !_comprobanteSubido && !_isSubiendoComprobante
+          ? _subirComprobanteYContinuar
+          : _comprobanteSubido
+            ? () async {
+                // Si ya está subido, solo continuar
+                HapticFeedback.lightImpact();
+                _tabController.animateTo(2);
+              }
+            : null; // Deshabilitar si no hay imagen o está subiendo
       case 2:
-        return _confirmarPago;
+        // Solo permitir confirmar si el comprobante está subido
+        return _comprobanteSubido && _comprobanteUrl != null && !_isSubiendoComprobante
+          ? _confirmarPago
+          : null;
       default:
         return null;
     }
@@ -1236,8 +1298,11 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
       case 0:
         return 'Ya Pagué - Continuar';
       case 1:
-        return _comprobanteImagen != null ? 'Continuar con Comprobante' : 'Continuar (Sin Comprobante)';
+        if (_isSubiendoComprobante) return 'Subiendo Comprobante...';
+        if (_comprobanteSubido) return 'Continuar al Paso 3';
+        return _comprobanteImagen != null ? 'Subir Comprobante' : 'Selecciona Comprobante Primero';
       case 2:
+        if (!_comprobanteSubido) return 'Debes Subir Comprobante Primero';
         return 'Confirmar Pago';
       default:
         return 'Siguiente';

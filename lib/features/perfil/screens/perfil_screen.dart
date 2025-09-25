@@ -151,7 +151,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   return;
                 }
                 
-                // 🚀 USAR API REAL PARA CAMBIAR CONTRASEÑA
+                // Cambiar contraseña
                 Navigator.pop(context);
                 
                 // Mostrar loading
@@ -318,8 +318,8 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
     return BaseScreen(
       title: 'Mi Perfil',
-      subtitle: 'Conectado al Backend Railway',
-      currentIndex: 3, // Perfil section
+      subtitle: 'Información de usuario',
+      currentIndex: 4, // Perfil section
       child: AdaptiveLayoutBuilder(
         mobile: _buildMobileProfile(),
         tablet: _buildTabletProfile(),
@@ -441,7 +441,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
     }
   }
   
-  // ⬆️ SUBIR AVATAR A CLOUDINARY
+  // ⬆️ SUBIR AVATAR
   Future<void> _uploadAvatar(File imageFile) async {
     setState(() {
       _isUploadingAvatar = true;
@@ -462,7 +462,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 ),
               ),
               SizedBox(width: 12),
-              Text('📷 Subiendo imagen a Cloudinary...'),
+              Text('📷 Subiendo imagen...'),
             ],
           ),
           duration: Duration(seconds: 10),
@@ -863,7 +863,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
       _MenuOption(
         icon: Icons.info,
         title: 'Acerca de',
-        subtitle: 'Versión 1.0.0 - Backend Railway',
+        subtitle: 'Información de la aplicación',
         color: Colors.grey,
         onTap: () => _showAboutDialog(context),
       ),
@@ -1190,19 +1190,15 @@ class _PerfilScreenState extends State<PerfilScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Versión: 1.0.0'),
-            SizedBox(height: 8),
-            Text('Backend: Railway PostgreSQL + JWT'),
-            SizedBox(height: 8),
-            Text('Storage: Cloudinary CDN'),
-            SizedBox(height: 8),
-            Text('API: FastAPI Python'),
             SizedBox(height: 16),
-            Text('Aplicación profesional para gestión integral de gallos de pelea con backend real.'),
+            Text('Aplicación profesional para gestión integral de gallos de pelea.'),
             SizedBox(height: 16),
-            Text('Desarrollado por:'),
-            Text('Juan Manuel Salas Carrillo', style: TextStyle(fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
-            Text('Contacto: 993592328'),
+            Text('Características:'),
+            Text('• Registro de gallos y pedigrí'),
+            Text('• Control de vacunas y salud'),
+            Text('• Gestión de entrenamientos'),
+            Text('• Seguimiento de peleas'),
+            Text('• Reportes y estadísticas'),
             SizedBox(height: 16),
             Text('© 2025 - Todos los derechos reservados'),
           ],
@@ -1997,10 +1993,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
           children: [
             Text('📱 Casta de Gallos'),
             Text('Versión: 1.0.0'),
-            Text('🚀 Backend: Railway PostgreSQL'),
-            Text('☁️ Storage: Cloudinary'),
-            Text('🔔 Notificaciones: Firebase'),
-            Text('🛡️ Auth: JWT + Sessions'),
             SizedBox(height: 16),
             Text('Gestión profesional de gallos de pelea con funcionalidades completas.'),
           ],

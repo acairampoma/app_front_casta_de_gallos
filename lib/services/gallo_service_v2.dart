@@ -17,7 +17,8 @@ class GalloServiceV2 {
   // 🔥 MÉTODO ÉPICO PRINCIPAL - CREAR GALLO CON GENEALOGÍA
   static Future<Map<String, dynamic>> createGalloConGenealogiaEpico({
     required Map<String, dynamic> galloData,
-    dynamic foto, // File o XFile
+    dynamic foto, // File o XFile (principal)
+    List<dynamic>? fotosAdicionales, // Archivos adicionales
   }) async {
     try {
       print('🚀 Iniciando creación épica con genealogía...');
@@ -37,12 +38,16 @@ class GalloServiceV2 {
       // 3. Mapear datos al formato backend
       _buildFormDataEpico(request, galloData);
       
-      // 4. Agregar foto si existe
+      // 4. Agregar foto principal y adicionales si existen
       if (foto != null) {
-        print('📸 Procesando foto...');
+        print('📸 Procesando foto principal...');
         await _addFotoToRequest(request, foto);
       } else {
-        print('📸 No hay foto para subir');
+        print('📸 No hay foto principal para subir');
+      }
+      if (fotosAdicionales != null && fotosAdicionales.isNotEmpty) {
+        print('🖼️ Procesando ${fotosAdicionales.length} fotos adicionales...');
+        await _addMultipleFotosToRequest(request, fotosAdicionales);
       }
       
       print('📦 Request preparado - Fields: ${request.fields.length}, Files: ${request.files.length}');
@@ -74,7 +79,8 @@ class GalloServiceV2 {
   static Future<Map<String, dynamic>> updateGalloConExpansionEpico({
     required int galloId,
     required Map<String, dynamic> galloData,
-    dynamic foto, // File o XFile - NUEVA FOTO (opcional)
+    dynamic foto, // File o XFile - NUEVA FOTO PRINCIPAL (opcional)
+    List<dynamic>? fotosAdicionales, // Nuevas fotos adicionales (opcional)
   }) async {
     try {
       print('✏️ Iniciando actualización épica con expansión genealógica...');
@@ -94,12 +100,16 @@ class GalloServiceV2 {
       // 3. Mapear datos actualizados al formato backend
       _buildFormDataEpico(request, galloData);
       
-      // 4. Agregar nueva foto si existe
+      // 4. Agregar nuevas fotos si existen
       if (foto != null) {
-        print('📸 Procesando nueva foto...');
+        print('📸 Procesando nueva foto principal...');
         await _addFotoToRequest(request, foto);
       } else {
-        print('📸 No hay nueva foto para subir');
+        print('📸 No hay nueva foto principal para subir');
+      }
+      if (fotosAdicionales != null && fotosAdicionales.isNotEmpty) {
+        print('🖼️ Procesando ${fotosAdicionales.length} fotos adicionales para update...');
+        await _addMultipleFotosToRequest(request, fotosAdicionales);
       }
       
       print('📦 Update request preparado - Fields: ${request.fields.length}, Files: ${request.files.length}');
@@ -220,6 +230,115 @@ class GalloServiceV2 {
       }
     });
     print('==========================================');
+  }
+
+  // 📸🔥 NUEVO: Enviar fotos múltiples usando el endpoint especializado /fotos-multiples
+  static Future<Map<String, dynamic>> uploadMultipleFotos({
+    required int galloId,
+    required List<dynamic> fotos, // Máximo 4 fotos: File o XFile
+  }) async {
+    try {
+      // 🚫 VALIDAR LÍMITE ESTRICTO DE 4 FOTOS
+      if (fotos.length > 4) {
+        return {'success': false, 'message': 'Máximo 4 fotos permitidas. Se enviaron ${fotos.length} fotos.'};
+      }
+
+      print('📸 Enviando ${fotos.length} fotos para gallo ID: $galloId');
+
+      // 1. Crear MultipartRequest al endpoint correcto
+      final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/api/v1/gallos/$galloId/fotos-multiples'));
+
+      // 2. Agregar JWT token
+      final token = await _getAuthToken();
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+        print('🔑 Token JWT agregado');
+      }
+
+      // 3. Agregar fotos con nombres correctos: foto_1, foto_2, foto_3, foto_4
+      for (int i = 0; i < fotos.length && i < 4; i++) {
+        final foto = fotos[i];
+        final fieldName = 'foto_${i + 1}'; // foto_1, foto_2, foto_3, foto_4
+
+        try {
+          if (kIsWeb && foto is XFile) {
+            final bytes = await foto.readAsBytes();
+            request.files.add(http.MultipartFile.fromBytes(
+              fieldName,
+              bytes,
+              filename: foto.name.isNotEmpty ? foto.name : 'foto_${i + 1}.jpg',
+            ));
+          } else if (foto is File) {
+            request.files.add(await http.MultipartFile.fromPath(
+              fieldName,
+              foto.path,
+              filename: 'foto_${i + 1}.jpg',
+            ));
+          }
+          print('✅ Foto ${i + 1} agregada como $fieldName');
+        } catch (e) {
+          print('❌ Error agregando foto ${i + 1}: $e');
+          continue;
+        }
+      }
+
+      print('📦 Request preparado con ${request.files.length} fotos');
+
+      // 4. Enviar request
+      final streamedResponse = await request.send().timeout(Duration(seconds: 45));
+      final response = await http.Response.fromStream(streamedResponse);
+
+      print('📡 Response /fotos-multiples: ${response.statusCode}');
+
+      // 5. Procesar respuesta
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print('✅ ${data["data"]["fotos_subidas"]} fotos guardadas en fotos_adicionales JSON');
+        return {'success': true, 'data': data, 'message': 'Fotos actualizadas exitosamente'};
+      } else {
+        final errorData = json.decode(response.body);
+        print('❌ Error subiendo fotos: ${errorData["detail"] ?? "Error desconocido"}');
+        return {'success': false, 'message': errorData["detail"] ?? 'Error del servidor'};
+      }
+
+    } catch (e) {
+      print('💥 Error en uploadMultipleFotos: $e');
+      return {'success': false, 'message': 'Error subiendo fotos: $e'};
+    }
+  }
+
+  // 📸 Helper: Agregar múltiples fotos adicionales al request (campo: fotos_adicionales[]) - DEPRECADO
+  static Future<void> _addMultipleFotosToRequest(http.MultipartRequest request, List<dynamic> fotos) async {
+    // 🚫 VALIDAR LÍMITE DE 4 FOTOS
+    if (fotos.length > 4) {
+      print('⚠️ ADVERTENCIA: Intentando subir ${fotos.length} fotos, máximo permitido: 4');
+      fotos = fotos.take(4).toList(); // Limitar a las primeras 4
+    }
+
+    int idx = 0;
+    for (final f in fotos) {
+      try {
+        if (kIsWeb && f is XFile) {
+          final bytes = await f.readAsBytes();
+          request.files.add(http.MultipartFile.fromBytes(
+            'fotos_adicionales[]',
+            bytes,
+            filename: f.name.isNotEmpty ? f.name : 'adicional_$idx.jpg',
+          ));
+        } else if (f is File) {
+          request.files.add(await http.MultipartFile.fromPath(
+            'fotos_adicionales[]',
+            f.path,
+            filename: 'adicional_$idx.jpg',
+          ));
+        }
+      } catch (e) {
+        print('⚠️ Error agregando foto adicional #$idx: $e');
+      }
+      idx++;
+    }
+    final added = request.files.where((x) => x.field == 'fotos_adicionales[]').length;
+    print('✅ Fotos adicionales agregadas: $added (DEPRECADO)');
   }
 
   // 📸 Helper: Agregar foto al request

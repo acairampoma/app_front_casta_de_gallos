@@ -49,6 +49,8 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
   dynamic _selectedImage; // File para móvil, XFile para web
   String? _currentPhotoUrl;
   bool _photoChanged = false;
+  // NUEVO: Fotos adicionales seleccionadas para update
+  final List<dynamic> _extraImages = []; // File (móvil) o XFile (web)
 
   // ===== CONTROLADORES FASE 2: 📝 Datos Básicos =====
   String? _raza;
@@ -649,6 +651,15 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
                 _pickImage(ImageSource.gallery);
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.collections, color: Colors.purple, size: 28),
+              title: const Text('Agregar fotos adicionales', style: TextStyle(fontSize: 16)),
+              subtitle: const Text('Seleccionar múltiples (máx 3-4)'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickAdditionalImagesFromGallery();
+              },
+            ),
             if (_selectedImage != null || _currentPhotoUrl != null)
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: Colors.red, size: 28),
@@ -663,11 +674,46 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
                   _showSnackBar('Foto eliminada', isError: false);
                 },
               ),
+            if (_extraImages.isNotEmpty)
+              ListTile(
+                leading: const Icon(Icons.clear_all, color: Colors.orange, size: 28),
+                title: const Text('Limpiar fotos adicionales', style: TextStyle(fontSize: 16)),
+                subtitle: Text('Actualmente: ${_extraImages.length} seleccionada(s)'),
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() => _extraImages.clear());
+                  _showSnackBar('Fotos adicionales limpiadas', isError: false);
+                },
+              ),
             const SizedBox(height: 16),
           ],
         ),
       ),
     );
+  }
+
+  // NUEVO: Seleccionar múltiples fotos adicionales desde la galería
+  Future<void> _pickAdditionalImagesFromGallery() async {
+    try {
+      final List<XFile> images = await _imagePicker.pickMultiImage(
+        imageQuality: 85,
+        maxWidth: 1920,
+        maxHeight: 1920,
+      );
+      if (images.isEmpty) return;
+      for (final img in images) {
+        if (_extraImages.length >= 4) break;
+        if (kIsWeb) {
+          _extraImages.add(img);
+        } else {
+          _extraImages.add(File(img.path));
+        }
+      }
+      setState(() {});
+      _showSnackBar('Se agregaron ${_extraImages.length} fotos adicionales', isError: false);
+    } catch (e) {
+      _showSnackBar('Error seleccionando adicionales: $e', isError: true);
+    }
   }
 
   // ===== GUARDAR GALLO ÉPICO =====
@@ -717,11 +763,28 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
         galloId: widget.gallo['id'],
         galloData: galloData,
         foto: _selectedImage,
+        fotosAdicionales: _extraImages.isNotEmpty ? _extraImages : null,
       );
-      
+
       if (response['success'] == true) {
         print('✅ Actualización exitosa');
-        
+
+        // 📸🔥 SUBIR FOTOS ADICIONALES USANDO ENDPOINT ESPECIALIZADO
+        if (_extraImages.isNotEmpty) {
+          _showSnackBar('📸 Actualizando ${_extraImages.length} fotos...', isError: false);
+
+          final fotosResponse = await GalloServiceV2.uploadMultipleFotos(
+            galloId: widget.gallo['id'],
+            fotos: _extraImages,
+          );
+
+          if (fotosResponse['success'] == true) {
+            _showSnackBar('✅ ${_extraImages.length} fotos guardadas en fotos_adicionales', isError: false);
+          } else {
+            _showSnackBar('⚠️ Gallo actualizado pero error en fotos: ${fotosResponse["message"]}', isError: true);
+          }
+        }
+
         // 🔥 PREPARAR RESULTADO ÉPICO PARA LISTA
         final resultadoEpico = {
           'action': 'REFRESH_LIST', // Flag crucial para la lista
@@ -1285,7 +1348,7 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
               ),
             ],
           ),
-          child: _selectedImage != null || _currentPhotoUrl != null
+          child: (_selectedImage != null || _currentPhotoUrl != null)
               ? Stack(
                   children: [
                     ClipRRect(
@@ -1310,32 +1373,30 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
                                   width: double.infinity,
                                   height: double.infinity,
                                 ))
-                          : (_currentPhotoUrl != null 
-                              ? Image.network(
-                                  _currentPhotoUrl!,
-                                  fit: BoxFit.cover,
-                                  width: double.infinity,
-                                  height: double.infinity,
-                                  loadingBuilder: (context, child, loadingProgress) {
-                                    if (loadingProgress == null) return child;
-                                    return const Center(
-                                      child: CircularProgressIndicator(color: Colors.red),
-                                    );
-                                  },
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Center(
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(Icons.error_outline, size: 48, color: Colors.grey),
-                                          SizedBox(height: 8),
-                                          Text('Error cargando imagen'),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                )
-                              : const SizedBox()),
+                          : Image.network(
+                              _currentPhotoUrl!,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return const Center(
+                                  child: CircularProgressIndicator(color: Colors.red),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                                      SizedBox(height: 8),
+                                      Text('Error cargando imagen'),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
                     ),
                     Positioned(
                       top: 12,
@@ -1406,6 +1467,35 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
                     ),
                   ),
                 ),
+        ),
+        const SizedBox(height: 12),
+        _buildExtraPhotosGrid(),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _pickAdditionalImagesFromGallery,
+                icon: const Icon(Icons.add_photo_alternate),
+                label: Text(_extraImages.isEmpty ? 'Agregar fotos' : 'Agregar más'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red,
+                  side: const BorderSide(color: Colors.red),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            if (_selectedImage != null || _currentPhotoUrl != null || _extraImages.isNotEmpty)
+              OutlinedButton.icon(
+                onPressed: () => _openCarouselViewerEdit(0),
+                icon: const Icon(Icons.slideshow),
+                label: const Text('Ver Carrusel'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red,
+                  side: const BorderSide(color: Colors.red),
+                ),
+              ),
+          ],
         ),
       ],
     );
@@ -1519,6 +1609,7 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
       ),
     );
   }
+
   // ===== FASE 3: 👨‍👩‍👦 GENEALOGÍA =====
   Widget _buildFase3() {
     return Form(
@@ -2304,5 +2395,154 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
       case 'Peruvian': return 'ASIL_PERUANO';
       default: return 'KELSO_AMERICANO'; // Default
     }
+  }
+
+  // ===== FOTOS ADICIONALES: GRID Y CARRUSEL =====
+  Widget _buildExtraPhotosGrid() {
+    if (_extraImages.isEmpty) {
+      return GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 8,
+          childAspectRatio: 1.2,
+        ),
+        itemCount: 1,
+        itemBuilder: (context, index) {
+          return InkWell(
+            onTap: _pickAdditionalImagesFromGallery,
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: const Center(child: Icon(Icons.add_photo_alternate, color: Colors.grey)),
+            ),
+          );
+        },
+      );
+    }
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+        childAspectRatio: 1.2,
+      ),
+      itemCount: _extraImages.length + (_extraImages.length < 4 ? 1 : 0),
+      itemBuilder: (context, index) {
+        final isAddTile = index == _extraImages.length && _extraImages.length < 4;
+        if (isAddTile) {
+          return InkWell(
+            onTap: _pickAdditionalImagesFromGallery,
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: const Center(child: Icon(Icons.add_photo_alternate, color: Colors.grey)),
+            ),
+          );
+        }
+        final item = _extraImages[index];
+        Widget image;
+        if (kIsWeb && item is XFile) {
+          image = Image.network(item.path, fit: BoxFit.cover, width: double.infinity, height: double.infinity);
+        } else {
+          image = Image.file(item as File, fit: BoxFit.cover, width: double.infinity, height: double.infinity);
+        }
+        return GestureDetector(
+          onTap: () => _openCarouselViewerEdit(index + _primaryOffsetForCarousel()),
+          child: Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Container(color: Colors.black12, child: image),
+              ),
+              Positioned(
+                right: 6,
+                top: 6,
+                child: InkWell(
+                  onTap: () {
+                    setState(() {
+                      _extraImages.removeAt(index);
+                    });
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.all(4),
+                    child: const Icon(Icons.close, size: 16, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  int _primaryOffsetForCarousel() {
+    return (_selectedImage != null || _currentPhotoUrl != null) ? 1 : 0;
+  }
+
+  void _openCarouselViewerEdit(int initialIndex) {
+    final List<dynamic> items = [];
+    if (_selectedImage != null) {
+      items.add(_selectedImage);
+    } else if (_currentPhotoUrl != null) {
+      items.add(_currentPhotoUrl);
+    }
+    items.addAll(_extraImages);
+    if (items.isEmpty) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        final controller = PageController(initialPage: initialIndex.clamp(0, items.length - 1));
+        return Dialog(
+          insetPadding: const EdgeInsets.all(12),
+          backgroundColor: Colors.black,
+          child: Stack(
+            children: [
+              PageView.builder(
+                controller: controller,
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final item = items[index];
+                  if (item is String) {
+                    return InteractiveViewer(child: Image.network(item, fit: BoxFit.contain));
+                  }
+                  if (kIsWeb && item is XFile) {
+                    return InteractiveViewer(child: Image.network(item.path, fit: BoxFit.contain));
+                  }
+                  if (item is File) {
+                    return InteractiveViewer(child: Image.file(item, fit: BoxFit.contain));
+                  }
+                  return const SizedBox();
+                },
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

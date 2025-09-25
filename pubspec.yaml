@@ -1,7 +1,7 @@
 name: gallos_app_new
 description: "Casta de Gallos - Aplicación profesional para criadores de gallos de pelea"
 publish_to: 'none'
-version: 1.5.4+844
+version: 1.5.4+850
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -18,10 +18,11 @@ dependencies:
   http: ^1.1.2
   http_parser: ^4.0.2
   
-  # UI y multimedia - LATEST VERSIONS with Privacy Manifests 
+  # UI y multimedia - LATEST VERSIONS with Privacy Manifests
   image_picker: ^1.1.2
   cached_network_image: ^3.4.1
   video_player: ^2.9.1
+  webview_flutter: ^4.7.0
   
   # Almacenamiento local - LATEST with Privacy Manifests
   shared_preferences: ^2.3.2
@@ -78,3 +79,4 @@ flutter:
     - assets/images/icono/
     - assets/images/yape/
     - assets/images/modulos/
+    - assets/images/home/

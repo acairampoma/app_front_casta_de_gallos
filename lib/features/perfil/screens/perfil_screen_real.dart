@@ -57,8 +57,8 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
     return BaseScreen(
       title: 'Mi Perfil',
-      subtitle: 'Conectado al Backend Railway',
-      currentIndex: 3, // Perfil section
+      subtitle: 'Información de usuario',
+      currentIndex: 4, // Perfil section
       child: RefreshIndicator(
         onRefresh: _loadUserData,
         child: SingleChildScrollView(
@@ -67,8 +67,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
           child: Column(
             children: [
               _buildProfileHeader(),
-              const SizedBox(height: 24),
-              _buildBackendInfo(),
               const SizedBox(height: 24),
               _buildStatsCard(),
               const SizedBox(height: 24),
@@ -201,70 +199,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
-  Widget _buildBackendInfo() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.cloud_done, color: Colors.green),
-                const SizedBox(width: 8),
-                const Text(
-                  'Conectado al Backend',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildInfoRow('🌐 API:', 'Railway PostgreSQL'),
-            _buildInfoRow('🔐 Auth:', 'JWT Token Activo'),
-            _buildInfoRow('📧 Verificado:', _user?.isVerified == true ? 'Sí' : 'No'),
-            _buildInfoRow('💎 Premium:', _user?.isPremium == true ? 'Sí' : 'No'),
-            _buildInfoRow('📅 Registro:', _formatDate(_user?.createdAt)),
-            _buildInfoRow('🔄 Último Login:', _formatDate(_user?.lastLogin)),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _buildInfoRow(String label, String? value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 3,
-            child: Text(
-              value ?? 'N/A',
-              style: const TextStyle(
-                color: Colors.grey,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   String _formatDate(DateTime? date) {
     if (date == null) return 'N/A';
@@ -385,16 +320,16 @@ class _PerfilScreenState extends State<PerfilScreen> {
       _MenuOption(
         icon: Icons.refresh,
         title: 'Actualizar Datos',
-        subtitle: 'Sincronizar con el servidor',
+        subtitle: 'Refrescar información',
         onTap: () => _loadUserData(),
       ),
       _MenuOption(
-        icon: Icons.cloud_upload,
-        title: 'Subir Avatar',
-        subtitle: 'Cambiar foto de perfil (Próximamente)',
+        icon: Icons.photo_camera,
+        title: 'Cambiar Foto',
+        subtitle: 'Actualizar foto de perfil (Próximamente)',
         onTap: () {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Upload de avatar próximamente')),
+            const SnackBar(content: Text('Función próximamente disponible')),
           );
         },
       ),
@@ -421,7 +356,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
       _MenuOption(
         icon: Icons.info,
         title: 'Acerca de',
-        subtitle: 'Versión 1.0.0 - Backend Railway',
+        subtitle: 'Información de la aplicación',
         onTap: () {
           _showAboutDialog(context);
         },
@@ -583,23 +518,21 @@ class _PerfilScreenState extends State<PerfilScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('GalloApp Pro'),
+        title: const Text('Casta de Gallos'),
         content: const Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Versión: 1.0.0'),
-            SizedBox(height: 8),
-            Text('Backend: Railway PostgreSQL + JWT'),
-            SizedBox(height: 8),
-            Text('Storage: Cloudinary CDN'),
-            SizedBox(height: 8),
-            Text('API: FastAPI Python'),
             SizedBox(height: 16),
-            Text('Aplicación profesional para gestión integral de gallos de pelea con backend real.'),
+            Text('Aplicación profesional para gestión integral de gallos de pelea.'),
             SizedBox(height: 16),
-            Text('Desarrollado por:'),
-            Text('Alan Cairampoma Carrillo', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text('Características:'),
+            Text('• Registro de gallos y pedigrí'),
+            Text('• Control de vacunas y salud'),
+            Text('• Gestión de entrenamientos'),
+            Text('• Seguimiento de peleas'),
+            Text('• Reportes y estadísticas'),
             SizedBox(height: 16),
             Text('© 2025 - Todos los derechos reservados'),
           ],
@@ -620,7 +553,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Cerrar Sesión'),
-          content: const Text('¿Estás seguro que deseas cerrar sesión?\n\nEsto te desconectará del backend.'),
+          content: const Text('¿Estás seguro que deseas cerrar sesión?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),

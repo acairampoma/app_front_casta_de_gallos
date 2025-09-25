@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/widgets/loading_widget.dart';
 import '../../../shared/widgets/error_widget.dart' as custom_error;
+import '../../../shared/widgets/base_screen.dart';
 import '../services/reportes_service.dart';
 import '../models/dashboard_model.dart';
 import '../widgets/filtros_simple_widget.dart';
@@ -185,137 +186,143 @@ class _ReportesScreenState extends State<ReportesScreen>
   // 🎨 BUILD PRINCIPAL
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: NestedScrollView(
-          headerSliverBuilder: (context, innerBoxIsScrolled) {
-            return [
-              // 🎯 APP BAR ÉPICO
-              SliverAppBar(
-                expandedHeight: 160,
-                floating: false,
-                pinned: true,
-                elevation: 0,
-                backgroundColor: AppColors.primary,
-                flexibleSpace: FlexibleSpaceBar(
-                  background: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          AppColors.primary,
-                          AppColors.primary.withOpacity(0.8),
-                        ],
-                      ),
-                    ),
-                    child: SafeArea(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 8),
-                            // Título épico - más compacto
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(
-                                    Icons.analytics,
-                                    color: Colors.white,
-                                    size: 24,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                const Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        '🐓 Reportes Épicos',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      Text(
-                                        'Dashboard gallístico avanzado',
-                                        style: TextStyle(
-                                          color: Colors.white70,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            // 🗓️ FILTROS WIDGET ÉPICOS
-                            FiltrosSimpleWidget(
-                              anoSeleccionado: _anoSeleccionado,
-                              mesSeleccionado: _mesSeleccionado,
-                              anosDisponibles: _anosDisponibles,
-                              onFiltrosChanged: _onFiltrosChanged,
-                              isLoading: _isLoading,
-                            ),
+    return BaseScreen(
+      title: 'Reportes',
+      subtitle: 'Dashboard gallístico avanzado',
+      currentIndex: 2,
+      showAppBar: false,
+      child: Container(
+        color: Colors.grey[50],
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: NestedScrollView(
+            headerSliverBuilder: (context, innerBoxIsScrolled) {
+              return [
+                // 🎯 APP BAR ÉPICO
+                SliverAppBar(
+                  expandedHeight: 160,
+                  floating: false,
+                  pinned: true,
+                  elevation: 0,
+                  backgroundColor: AppColors.primary,
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            AppColors.primary,
+                            AppColors.primary.withOpacity(0.8),
                           ],
+                        ),
+                      ),
+                      child: SafeArea(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 8),
+                              // Título épico - más compacto
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(
+                                      Icons.analytics,
+                                      color: Colors.white,
+                                      size: 24,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          '🐓 Reportes Épicos',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Dashboard gallístico avanzado',
+                                          style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              // 🗓️ FILTROS WIDGET ÉPICOS
+                              FiltrosSimpleWidget(
+                                anoSeleccionado: _anoSeleccionado,
+                                mesSeleccionado: _mesSeleccionado,
+                                anosDisponibles: _anosDisponibles,
+                                onFiltrosChanged: _onFiltrosChanged,
+                                isLoading: _isLoading,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              
-              // 🎯 TABS ÉPICOS
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _StickyTabBarDelegate(
-                  TabBar(
-                    controller: _tabController,
-                    labelColor: AppColors.primary,
-                    unselectedLabelColor: Colors.grey[600],
-                    indicatorColor: AppColors.primary,
-                    indicatorWeight: 3,
-                    labelStyle: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                
+                // 🎯 TABS ÉPICOS
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _StickyTabBarDelegate(
+                    TabBar(
+                      controller: _tabController,
+                      labelColor: AppColors.primary,
+                      unselectedLabelColor: Colors.grey[600],
+                      indicatorColor: AppColors.primary,
+                      indicatorWeight: 3,
+                      labelStyle: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                      unselectedLabelStyle: const TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                      ),
+                      tabs: const [
+                        Tab(
+                          icon: Icon(Icons.dashboard),
+                          text: 'Dashboard',
+                        ),
+                        Tab(
+                          icon: Icon(Icons.leaderboard),
+                          text: 'Rankings',
+                        ),
+                        Tab(
+                          icon: Icon(Icons.description),
+                          text: 'Documentos',
+                        ),
+                      ],
                     ),
-                    unselectedLabelStyle: const TextStyle(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
-                    ),
-                    tabs: const [
-                      Tab(
-                        icon: Icon(Icons.dashboard),
-                        text: 'Dashboard',
-                      ),
-                      Tab(
-                        icon: Icon(Icons.leaderboard),
-                        text: 'Rankings',
-                      ),
-                      Tab(
-                        icon: Icon(Icons.description),
-                        text: 'Documentos',
-                      ),
-                    ],
                   ),
                 ),
-              ),
-            ];
-          },
-          
-          // 📱 BODY CON TABS
-          body: _buildBody(),
+              ];
+            },
+            
+            // 📱 BODY CON TABS
+            body: _buildBody(),
+          ),
         ),
       ),
     );

@@ -425,6 +425,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             const SizedBox(height: 24),
             _buildRevenueSectionEpic(),
             const SizedBox(height: 24),
+            _buildAccesosRapidosEpic(),
+            const SizedBox(height: 24),
             _buildRecentActivityEpic(),
           ],
         ),
@@ -726,6 +728,177 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  // 🚀 Accesos Rápidos Épicos
+  Widget _buildAccesosRapidosEpic() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.purple.withOpacity(0.1),
+            Colors.blue.withOpacity(0.1),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.purple.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.dashboard, color: Colors.purple.shade600, size: 24),
+              const SizedBox(width: 8),
+              const Text(
+                '🚀 Módulos Administrativos',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Grid 2x2 de accesos rápidos
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 2.5,
+            children: [
+              _buildAccesoRapidoCard(
+                title: 'Transmisiones',
+                subtitle: 'Gestión de eventos',
+                icon: Icons.live_tv,
+                color: Colors.red,
+                onTap: () => Navigator.pushNamed(context, '/admin-transmisiones'),
+              ),
+              _buildAccesoRapidoCard(
+                title: 'Suscripciones',
+                subtitle: 'Planes y pagos',
+                icon: Icons.payment,
+                color: Colors.green,
+                onTap: () {
+                  // Ya están en este dashboard, mostrar mensaje
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Ya estás en el dashboard principal'),
+                      backgroundColor: Colors.blue,
+                    ),
+                  );
+                },
+              ),
+              _buildAccesoRapidoCard(
+                title: 'Usuarios',
+                subtitle: 'Gestión de usuarios',
+                icon: Icons.people,
+                color: Colors.blue,
+                onTap: () {
+                  // Cambiar al tab de usuarios
+                  _tabController.animateTo(2);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Navegando a gestión de usuarios'),
+                      backgroundColor: Colors.blue,
+                    ),
+                  );
+                },
+              ),
+              _buildAccesoRapidoCard(
+                title: 'Estadísticas',
+                subtitle: 'Métricas y reportes',
+                icon: Icons.analytics,
+                color: Colors.orange,
+                onTap: () {
+                  // Cambiar al tab de dashboard
+                  _tabController.animateTo(0);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Navegando a estadísticas generales'),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 🎯 Card de Acceso Rápido
+  Widget _buildAccesoRapidoCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.2), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: color.withOpacity(0.7),
+            ),
+          ],
+        ),
       ),
     );
   }

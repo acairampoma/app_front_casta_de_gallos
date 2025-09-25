@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import 'package:gallos_app_new/shared/theme/app_colors.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/home/screens/home_screen.dart';
@@ -14,6 +15,9 @@ import 'features/vacunas/screens/vacunas_screen_real.dart';
 import 'features/topes/screens/topes_gallos_screen.dart';
 import 'features/peleas/screens/peleas_gallos_screen.dart';
 import 'features/admin/screens/admin_dashboard_screen.dart';
+import 'features/admin/screens/admin_transmisiones_screen.dart';
+import 'features/transmisiones/screens/transmisiones_screen.dart';
+import 'screens/marketplace/marketplace_screen.dart';
 import 'services/auth_service.dart';
 import 'services/connection_service.dart';
 import 'services/platform_factory.dart';
@@ -26,13 +30,24 @@ import 'services/platform_implementations/platform_service_base.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   print('🚀 === INICIANDO CASTA DE GALLOS - MULTIPLATAFORMA ===');
-  
+
+  // 📺 Inicializar WebView Platform
+  if (WebViewPlatform.instance == null) {
+    // En plataformas que soporten WebView
+    try {
+      // WebView se inicializará automáticamente en Android/iOS
+      print('📺 [WEBVIEW] Platform será inicializado automáticamente');
+    } catch (e) {
+      print('⚠️ [WEBVIEW] No disponible en esta plataforma: $e');
+    }
+  }
+
   // 🌐 Crear platform service usando factory
   final platformService = PlatformFactory.createPlatformService();
   print('📱 Plataforma detectada: ${_getPlatformName(platformService)}');
-  
+
   // 🔔 Inicializar Firebase si es soportado
   try {
     await platformService.initializeFirebase();
@@ -43,11 +58,11 @@ void main() async {
   } catch (e) {
     print('⚠️ Firebase no disponible en esta plataforma: $e');
   }
-  
+
   // 🚀 Inicializar servicios básicos
   await AuthService.instance.initialize();
   await ConnectionService().initialize();
-  
+
   runApp(const CastaDeGallosApp());
 }
 
@@ -158,6 +173,9 @@ class CastaDeGallosApp extends StatelessWidget {
         '/topes': (context) => const TopesGallosScreen(),
         '/peleas': (context) => const PeleasGallosScreen(),
         '/admin-dashboard': (context) => const AdminDashboardScreen(),
+        '/admin-transmisiones': (context) => const AdminTransmisionesScreen(),
+        '/transmisiones': (context) => const TransmisionesScreen(),
+        '/marketplace': (context) => const MarketplaceScreen(),
       },
     );
   }
