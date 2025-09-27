@@ -6,6 +6,7 @@ buildscript {
     }
 
     dependencies {
+        classpath 'com.android.tools.build:gradle:8.1.0'  // 🔥 ANDROID GRADLE PLUGIN FOR 16KB ALIGNMENT
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.google.gms:google-services:4.4.2'  // 🔥 FIREBASE SERVICES
     }

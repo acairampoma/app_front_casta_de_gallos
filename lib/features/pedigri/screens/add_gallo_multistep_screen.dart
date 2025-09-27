@@ -792,51 +792,168 @@ class _AddGalloMultistepScreenState extends State<AddGalloMultistepScreen> with 
           ),
         ),
         const SizedBox(height: 12),
-        // Grid compacto 2x2 de miniaturas
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
+
+        // 🔥 NUEVO: Estructura igual al edit screen
+        if (_selectedImages.isEmpty)
+          // Estado vacío - mostrar botón grande para agregar primera foto
+          InkWell(
+            onTap: _pickMultipleFromGallery,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[300]!),
-          ),
-          child: _selectedImages.isEmpty
-              ? InkWell(
-                  onTap: _pickMultipleFromGallery,
-                  borderRadius: BorderRadius.circular(11),
-                  child: const SizedBox(
-                    height: 160,
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.add_photo_alternate, size: 42, color: Colors.grey),
-                          SizedBox(height: 8),
-                          Text('Agregar fotos (máx. 4)', style: TextStyle(color: Colors.grey, fontSize: 14)),
-                        ],
+            child: Container(
+              height: 160,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey[300]!, width: 2),
+              ),
+              child: const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.add_photo_alternate, size: 42, color: Colors.grey),
+                    SizedBox(height: 8),
+                    Text('Agregar foto principal', style: TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.w500)),
+                    SizedBox(height: 4),
+                    Text('Toca para seleccionar hasta 4 fotos', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  ],
+                ),
+              ),
+            ),
+          )
+        else
+          // Mostrar fotos seleccionadas
+          Column(
+            children: [
+              // 📸 FOTO PRINCIPAL (primera imagen)
+              Container(
+                height: 200,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: _buildImageForDisplay(_selectedImages[0], BoxFit.cover),
+                    ),
+                    // Badge "Principal"
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text('Principal', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
                       ),
                     ),
-                  ),
-                )
-              : GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                    childAspectRatio: 1.2, // 👈 AGREGADO para igualar con Edit
-                  ),
-                  itemCount: _selectedImages.length + (_selectedImages.length < 4 ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    final isAddTile = index == _selectedImages.length && _selectedImages.length < 4;
-                    if (isAddTile) {
-                      return _buildAddPhotoTile();
-                    }
-                    return _buildPhotoTile(index);
-                  },
+                    // Botón eliminar
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedImages.removeAt(0);
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Icon(Icons.close, color: Colors.white, size: 16),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-        ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // 📸 FOTOS ADICIONALES (2, 3, 4) en una fila
+              if (_selectedImages.length > 1 || _selectedImages.length < 4)
+                Container(
+                  height: 80,
+                  child: GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3, // 3 columnas para fotos adicionales
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                      childAspectRatio: 1.0, // Cuadrado
+                    ),
+                    itemCount: 3, // Máximo 3 fotos adicionales
+                    itemBuilder: (context, index) {
+                      final photoIndex = index + 1; // Índices 1, 2, 3 (saltamos la principal que es índice 0)
+
+                      if (photoIndex < _selectedImages.length) {
+                        // Mostrar foto adicional existente
+                        return Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: _buildImageForDisplay(_selectedImages[photoIndex], BoxFit.cover),
+                            ),
+                            // Botón eliminar mini
+                            Positioned(
+                              top: 2,
+                              right: 2,
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _selectedImages.removeAt(photoIndex);
+                                  });
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(Icons.close, color: Colors.white, size: 12),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      } else if (_selectedImages.length < 4) {
+                        // Mostrar botón "agregar más" solo si no hemos llegado al máximo
+                        return InkWell(
+                          onTap: _pickMultipleFromGallery,
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey[300]!),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add, color: Colors.grey[600], size: 16),
+                                Text('Agregar', style: TextStyle(color: Colors.grey[600], fontSize: 8)),
+                              ],
+                            ),
+                          ),
+                        );
+                      } else {
+                        // Slot vacío (ya tenemos 4 fotos)
+                        return Container();
+                      }
+                    },
+                  ),
+                ),
+            ],
+          ),
         const SizedBox(height: 12),
         // Botones de acción
         Row(
@@ -1475,37 +1592,22 @@ class _AddGalloMultistepScreenState extends State<AddGalloMultistepScreen> with 
       
       await Future.delayed(Duration(milliseconds: 800));
       
-      // 3. 🚀 ENVIAR AL BACKEND CON GENEALOGÍA Y FOTO
-      _showEpicSnackbar('🚀 Creando gallo con genealogía...', Colors.orange);
-      
+      // 3. 🚀 ENVIAR AL BACKEND - UNA SOLA LLAMADA CON TODAS LAS FOTOS
+      if (_selectedImages.isNotEmpty) {
+        _showEpicSnackbar('🚀 Creando gallo con ${_selectedImages.length} fotos...', Colors.orange);
+      } else {
+        _showEpicSnackbar('🚀 Creando gallo...', Colors.orange);
+      }
+
       final response = await GalloServiceV2.createGalloConGenealogiaEpico(
         galloData: galloData,
         foto: _selectedImages.isNotEmpty ? _selectedImages.first : null,
-        fotosAdicionales: _selectedImages.length > 1
-            ? _selectedImages.sublist(1)
-            : null,
+        fotosAdicionales: _selectedImages.length > 1 ? _selectedImages.sublist(1) : [],
       );
 
       // 4. 🎯 PROCESAR RESPUESTA ÉPICA
       if (response['success'] == true) {
-        final galloId = response['data']?['gallo_id'];
-
-        // 📸🔥 SUBIR FOTOS MÚLTIPLES USANDO ENDPOINT ESPECIALIZADO
-        if (_selectedImages.isNotEmpty && galloId != null) {
-          _showEpicSnackbar('📸 Subiendo ${_selectedImages.length} fotos...', Colors.blue);
-
-          final fotosResponse = await GalloServiceV2.uploadMultipleFotos(
-            galloId: galloId,
-            fotos: _selectedImages,
-          );
-
-          if (fotosResponse['success'] == true) {
-            _showEpicSnackbar('✅ ${_selectedImages.length} fotos guardadas correctamente', Colors.green);
-          } else {
-            _showEpicSnackbar('⚠️ Gallo creado pero error en fotos: ${fotosResponse["message"]}', Colors.orange);
-          }
-        }
-
+        _showEpicSnackbar('✅ Gallo creado exitosamente', Colors.green);
         await _handleSuccessResponse(response);
       } else {
         throw response['message'] ?? 'Error desconocido del servidor';
@@ -1730,6 +1832,25 @@ class _AddGalloMultistepScreenState extends State<AddGalloMultistepScreen> with 
             borderRadius: BorderRadius.circular(8),
           ),
         ),
+      );
+    }
+  }
+
+  // 🖼️ HELPER: Construir widget de imagen según tipo (File o XFile)
+  Widget _buildImageForDisplay(dynamic image, BoxFit fit) {
+    if (image is XFile) {
+      return Image.network(
+        image.path,
+        fit: fit,
+        width: double.infinity,
+        height: double.infinity,
+      );
+    } else {
+      return Image.file(
+        image as File,
+        fit: fit,
+        width: double.infinity,
+        height: double.infinity,
       );
     }
   }

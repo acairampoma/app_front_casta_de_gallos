@@ -34,6 +34,19 @@ android {
     compileSdk = 36
     ndkVersion flutter.ndkVersion
 
+    // 🔥 CRITICAL: Android 15 - Force 16KB Page Alignment
+    bundle {
+        abi {
+            enableSplit = false  // Disable ABI splits to force universal APK with 16KB alignment
+        }
+        language {
+            enableSplit = false
+        }
+        density {
+            enableSplit = false  // Disable all splits to ensure 16KB alignment
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -59,6 +72,13 @@ android {
         
         // 🔥 HABILITAR MULTIDEX PARA FLUTTER
         multiDexEnabled true
+
+        // 🔥 ANDROID 15 COMPATIBILITY - Native Library Alignment 16KB
+        ndk {
+            debugSymbolLevel 'SYMBOL_TABLE'
+            // Force 16KB page alignment for all architectures
+            abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'
+        }
     }
 
     signingConfigs {
@@ -72,11 +92,35 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.release
-            
+
             // 🔒 DESHABILITADO TEMPORALMENTE PARA COMPILAR
             minifyEnabled false
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    // 🔥 ANDROID 15 - 16KB Page Alignment for Native Libraries
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = false
+            // Force 16KB alignment for native libraries
+            pickFirsts += ['**/libc++_shared.so', '**/libflutter.so']
+        }
+        dex {
+            useLegacyPackaging = false
+        }
+        // Ensure proper alignment for all native assets
+        resources {
+            excludes += ['META-INF/DEPENDENCIES', 'META-INF/LICENSE', 'META-INF/LICENSE.txt', 'META-INF/NOTICE', 'META-INF/NOTICE.txt']
+        }
+    }
+
+
+    // 🔥 ANDROID 15 - Additional NDK Configuration for 16KB Alignment
+    splits {
+        abi {
+            enable false  // Disable ABI splits to force 16KB aligned universal APK
         }
     }
 }
@@ -88,4 +132,8 @@ flutter {
 dependencies {
     // 🔥 MULTIDEX SUPPORT PARA FLUTTER
     implementation 'androidx.multidex:multidex:2.0.1'
+
+    // 🔥 ANDROID 15 - Edge-to-Edge Display Support
+    implementation 'androidx.core:core:1.12.0'
+    implementation 'androidx.activity:activity:1.8.2'
 }

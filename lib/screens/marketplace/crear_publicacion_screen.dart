@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import '../../services/gallo_service.dart';
 import '../../services/marketplace_service.dart';
 
@@ -161,20 +162,66 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                                           color: Colors.grey.shade300,
                                           borderRadius: BorderRadius.circular(4),
                                         ),
-                                        child: (gallo['fotos'] != null &&
-                                               gallo['fotos'].isNotEmpty)
-                                            ? ClipRRect(
-                                                borderRadius: BorderRadius.circular(4),
-                                                child: Image.network(
-                                                  gallo['fotos'][0],
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder: (_, __, ___) => const Icon(
-                                                    Icons.image,
-                                                    color: Colors.grey,
-                                                  ),
-                                                ),
-                                              )
-                                            : const Icon(Icons.image, color: Colors.grey),
+                                        child: Builder(
+                                          builder: (context) {
+                                            // 🔥 FIX: Buscar foto en estructura nueva fotos_adicionales
+                                            String? fotoUrl;
+
+                                            // Primero revisar fotos_adicionales (estructura nueva)
+                                            if (gallo['fotos_adicionales'] != null) {
+                                              try {
+                                                final fotosData = gallo['fotos_adicionales'];
+                                                List<dynamic> fotos = [];
+
+                                                if (fotosData is String) {
+                                                  // Si es JSON string, parsearlo
+                                                  final parsed = json.decode(fotosData);
+                                                  fotos = parsed is List ? parsed : [];
+                                                } else if (fotosData is List) {
+                                                  fotos = fotosData;
+                                                }
+
+                                                // Buscar foto principal o tomar la primera
+                                                for (var foto in fotos) {
+                                                  if (foto is Map && foto['url'] != null) {
+                                                    if (foto['es_principal'] == true) {
+                                                      fotoUrl = foto['url'];
+                                                      break;
+                                                    } else if (fotoUrl == null) {
+                                                      fotoUrl = foto['url']; // Backup: primera foto encontrada
+                                                    }
+                                                  }
+                                                }
+                                              } catch (e) {
+                                                print('❌ Error parseando fotos_adicionales: $e');
+                                              }
+                                            }
+
+                                            // Fallback: revisar campo fotos legacy
+                                            if (fotoUrl == null && gallo['fotos'] != null && gallo['fotos'].isNotEmpty) {
+                                              fotoUrl = gallo['fotos'][0];
+                                            }
+
+                                            // Fallback: revisar foto_principal_url
+                                            if (fotoUrl == null && gallo['foto_principal_url'] != null) {
+                                              fotoUrl = gallo['foto_principal_url'];
+                                            }
+
+                                            return fotoUrl != null
+                                                ? ClipRRect(
+                                                    borderRadius: BorderRadius.circular(4),
+                                                    child: Image.network(
+                                                      fotoUrl,
+                                                      fit: BoxFit.cover,
+                                                      errorBuilder: (_, __, ___) => const Icon(
+                                                        Icons.image,
+                                                        color: Colors.grey,
+                                                      ),
+                                                    ),
+                                                  )
+                                                : const Icon(Icons.image, color: Colors.grey);
+                                          },
+                                        ),
                                       ),
                                       const SizedBox(width: 12),
                                       Expanded(

@@ -144,14 +144,25 @@ class DetallePublicacionScreen extends StatelessWidget {
                 child: ElevatedButton.icon(
                   onPressed: (pub.vendedorTelefono ?? '').isEmpty
                       ? null
-                      : () => WhatsappService.openChat(
-                            phone: pub.vendedorTelefono!,
-                            message: 'Hola, estoy interesado en ${pub.nombre}',
-                          ),
-                  icon: Icon(Icons.chat),
-                  label: const Text('Contactar'),
+                      : () async {
+                          try {
+                            await WhatsappService.openChat(
+                              phone: pub.vendedorTelefono!,
+                              message: 'Hola, estoy interesado en ${pub.nombre}',
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error abriendo WhatsApp: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                  icon: const Icon(Icons.chat),
+                  label: const Text('WhatsApp'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
+                    backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
                   ),
                 ),

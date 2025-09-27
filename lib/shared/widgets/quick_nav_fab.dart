@@ -22,13 +22,38 @@ class QuickNavFAB extends StatelessWidget {
     );
   }
 
-  // 🟢 Abrir soporte por WhatsApp con mensaje predefinido
+  // 🟢 Abrir soporte por WhatsApp con mensaje predefinido (igual que en perfil)
   Future<void> _openWhatsAppSupport() async {
-    const phone = '51993592328';
+    const phoneNumber = '51993592328'; // Número con código de país
     const message = 'Hola, necesito soporte técnico en GalloApp';
-    final uri = Uri.parse('https://wa.me/$phone?text=${Uri.encodeComponent(message)}');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+
+    // URLs para diferentes plataformas
+    final whatsappAppUrl = 'whatsapp://send?phone=$phoneNumber&text=${Uri.encodeComponent(message)}';
+    final whatsappWebUrl = 'https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}';
+
+    try {
+      // Intentar abrir la APP de WhatsApp primero
+      final appUri = Uri.parse(whatsappAppUrl);
+      bool launched = await launchUrl(appUri, mode: LaunchMode.externalApplication);
+
+      if (!launched) {
+        // Si no se puede abrir la app, intentar WhatsApp Web
+        final webUri = Uri.parse(whatsappWebUrl);
+        launched = await launchUrl(webUri, mode: LaunchMode.externalApplication);
+      }
+
+      if (!launched) {
+        throw Exception('No se pudo abrir WhatsApp');
+      }
+    } catch (e) {
+      print('❌ Error abriendo WhatsApp: $e');
+      // Fallback silencioso - intenta WhatsApp Web una vez más
+      try {
+        final webUri = Uri.parse(whatsappWebUrl);
+        await launchUrl(webUri, mode: LaunchMode.externalApplication);
+      } catch (e2) {
+        print('❌ Error final: $e2');
+      }
     }
   }
 }

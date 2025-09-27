@@ -51,6 +51,7 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
   bool _photoChanged = false;
   // NUEVO: Fotos adicionales seleccionadas para update
   final List<dynamic> _extraImages = []; // File (móvil) o XFile (web)
+  final List<String> _photosToDelete = []; // IDs de fotos a eliminar del backend
 
   // ===== CONTROLADORES FASE 2: 📝 Datos Básicos =====
   String? _raza;
@@ -374,6 +375,61 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
       
       _colorPlaca = gallo['color_placa']?.toString();
       _ubicacionPlaca = gallo['ubicacion_placa']?.toString();
+
+      // 🔥 NEW: Load existing additional photos from fotos_adicionales (List or JSON String)
+      if (gallo['fotos_adicionales'] != null) {
+        try {
+          dynamic fotosData;
+
+          // Handle both List (already parsed) and String JSON formats
+          if (gallo['fotos_adicionales'] is List) {
+            // Already parsed as List (from API response)
+            fotosData = gallo['fotos_adicionales'] as List;
+            debugPrint('🔍 fotos_adicionales viene como List ya parseada');
+          } else if (gallo['fotos_adicionales'] is String) {
+            // JSON string that needs parsing
+            final fotosAdicionalesJson = gallo['fotos_adicionales'].toString();
+            if (fotosAdicionalesJson.isNotEmpty && fotosAdicionalesJson != 'null') {
+              fotosData = json.decode(fotosAdicionalesJson);
+              debugPrint('🔍 fotos_adicionales parseada desde JSON string');
+            }
+          }
+
+          if (fotosData is List && fotosData.isNotEmpty) {
+            debugPrint('🖼️ Procesando ${fotosData.length} fotos desde BD (nueva estructura)');
+            // Clear existing photos and load from database
+            _extraImages.clear();
+
+            for (var fotoData in fotosData) {
+              if (fotoData is Map && fotoData['url'] != null) {
+                // 🔥 NUEVO: Separar foto principal de fotos adicionales
+                bool esPrincipal = fotoData['es_principal'] == true;
+
+                if (esPrincipal) {
+                  // Esta es la foto principal - actualizar _currentPhotoUrl si no hay foto_principal_url
+                  if (_currentPhotoUrl == null || _currentPhotoUrl!.isEmpty) {
+                    _currentPhotoUrl = fotoData['url'].toString();
+                    debugPrint('✅ Foto principal cargada desde fotos_adicionales: $_currentPhotoUrl');
+                  }
+                } else {
+                  // Esta es una foto adicional - agregar a _extraImages
+                  _extraImages.add({
+                    'type': 'existing_url',
+                    'url': fotoData['url'].toString(),
+                    'public_id': fotoData['cloudinary_public_id']?.toString(),
+                    'cloudinary_public_id': fotoData['cloudinary_public_id']?.toString(),
+                    'orden': fotoData['orden'],
+                    'es_principal': false,
+                  });
+                }
+              }
+            }
+            debugPrint('✅ Fotos cargadas: Principal: ${_currentPhotoUrl != null ? "SÍ" : "NO"}, Adicionales: ${_extraImages.length}');
+          }
+        } catch (e) {
+          debugPrint('❌ Error procesando fotos_adicionales: $e');
+        }
+      }
 
       // FASE 2: Datos básicos
       // 🔥 FIX: Manejar raza como objeto, string o ID del backend
@@ -769,21 +825,50 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
       if (response['success'] == true) {
         print('✅ Actualización exitosa');
 
-        // 📸🔥 SUBIR FOTOS ADICIONALES USANDO ENDPOINT ESPECIALIZADO
-        if (_extraImages.isNotEmpty) {
-          _showSnackBar('📸 Actualizando ${_extraImages.length} fotos...', isError: false);
+        // 🗑️ ELIMINAR FOTOS MARCADAS PARA ELIMINACIÓN
+        if (_photosToDelete.isNotEmpty) {
+          _showSnackBar('🗑️ Eliminando ${_photosToDelete.length} foto(s)...', isError: false);
+          debugPrint('🔍 Fotos a eliminar: $_photosToDelete');
+
+          bool allDeleted = true;
+          for (String publicId in _photosToDelete) {
+            try {
+              await _deleteFotoFromBackend(widget.gallo['id'], publicId);
+              debugPrint('✅ Foto eliminada exitosamente: $publicId');
+            } catch (e) {
+              debugPrint('❌ Error eliminando foto $publicId: $e');
+              allDeleted = false;
+            }
+          }
+
+          if (allDeleted) {
+            _showSnackBar('✅ ${_photosToDelete.length} foto(s) eliminada(s)', isError: false);
+          } else {
+            _showSnackBar('⚠️ Algunas fotos no se pudieron eliminar', isError: true);
+          }
+        }
+
+        // 📸🔥 SUBIR NUEVAS FOTOS ADICIONALES (solo las que no son existentes)
+        final newPhotos = _extraImages.where((item) =>
+          !(item is Map && item['type'] == 'existing_url')).toList();
+
+        if (newPhotos.isNotEmpty) {
+          _showSnackBar('📸 Subiendo ${newPhotos.length} nueva(s) foto(s)...', isError: false);
 
           final fotosResponse = await GalloServiceV2.uploadMultipleFotos(
             galloId: widget.gallo['id'],
-            fotos: _extraImages,
+            fotos: newPhotos,
           );
 
           if (fotosResponse['success'] == true) {
-            _showSnackBar('✅ ${_extraImages.length} fotos guardadas en fotos_adicionales', isError: false);
+            _showSnackBar('✅ ${newPhotos.length} foto(s) nueva(s) guardada(s)', isError: false);
           } else {
-            _showSnackBar('⚠️ Gallo actualizado pero error en fotos: ${fotosResponse["message"]}', isError: true);
+            _showSnackBar('⚠️ Gallo actualizado pero error en nuevas fotos: ${fotosResponse["message"]}', isError: true);
           }
         }
+
+        // 🔥 LIMPIAR LISTA DE FOTOS A ELIMINAR
+        _photosToDelete.clear();
 
         // 🔥 PREPARAR RESULTADO ÉPICO PARA LISTA
         final resultadoEpico = {
@@ -2399,64 +2484,92 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
 
   // ===== FOTOS ADICIONALES: GRID Y CARRUSEL =====
   Widget _buildExtraPhotosGrid() {
-    if (_extraImages.isEmpty) {
-      return GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 8,
-          childAspectRatio: 1.2,
-        ),
-        itemCount: 1,
-        itemBuilder: (context, index) {
-          return InkWell(
-            onTap: _pickAdditionalImagesFromGallery,
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.grey[300]!),
-              ),
-              child: const Center(child: Icon(Icons.add_photo_alternate, color: Colors.grey)),
-            ),
-          );
-        },
-      );
-    }
+    // 🔥 MEJORADO: Grid para fotos ADICIONALES solamente (la principal va por separado)
+    const int maxPhotos = 3; // Solo 3 fotos adicionales
+    final int totalSlots = 3; // Solo 3 slots para adicionales
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
+        crossAxisCount: 3, // 3 columnas para las 3 fotos adicionales
         crossAxisSpacing: 8,
         mainAxisSpacing: 8,
-        childAspectRatio: 1.2,
+        childAspectRatio: 1.0, // Cuadrado para mejor vista en 3 columnas
       ),
-      itemCount: _extraImages.length + (_extraImages.length < 4 ? 1 : 0),
+      itemCount: totalSlots,
       itemBuilder: (context, index) {
-        final isAddTile = index == _extraImages.length && _extraImages.length < 4;
-        if (isAddTile) {
-          return InkWell(
-            onTap: _pickAdditionalImagesFromGallery,
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.grey[300]!),
+        // 🔥 MEJORADO: Lógica para 3 fotos adicionales en 1 fila
+        if (index >= _extraImages.length) {
+          // Slot vacío - mostrar botón "agregar"
+          if (_extraImages.length < maxPhotos) {
+            return InkWell(
+              onTap: _pickAdditionalImagesFromGallery,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[300]!, width: 2, style: BorderStyle.solid),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.add_photo_alternate, color: Colors.grey[600], size: 32),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Agregar\nfoto',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    ),
+                  ],
+                ),
               ),
-              child: const Center(child: Icon(Icons.add_photo_alternate, color: Colors.grey)),
-            ),
-          );
+            );
+          } else {
+            // Slot vacío sin funcionalidad
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(12),
+              ),
+            );
+          }
         }
+
+        // Slot con foto existente
         final item = _extraImages[index];
         Widget image;
-        if (kIsWeb && item is XFile) {
+
+        // 🔥 NEW: Handle both existing URLs and new files
+        if (item is Map && item['type'] == 'existing_url') {
+          // Existing photo from database (URL)
+          image = Image.network(
+            item['url'],
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Container(
+                color: Colors.grey[200],
+                child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                color: Colors.grey[200],
+                child: const Center(
+                  child: Icon(Icons.broken_image, color: Colors.grey, size: 32),
+                ),
+              );
+            },
+          );
+        } else if (kIsWeb && item is XFile) {
+          // New photo on web (XFile)
           image = Image.network(item.path, fit: BoxFit.cover, width: double.infinity, height: double.infinity);
         } else {
+          // New photo on mobile (File)
           image = Image.file(item as File, fit: BoxFit.cover, width: double.infinity, height: double.infinity);
         }
         return GestureDetector(
@@ -2464,17 +2577,52 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
           child: Stack(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Container(color: Colors.black12, child: image),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  color: Colors.black12,
+                  child: image
+                ),
               ),
+              // 🔥 MEJORADO: Botón eliminar más visible y táctil
               Positioned(
-                right: 6,
-                top: 6,
+                right: 8,
+                top: 8,
                 child: InkWell(
                   onTap: () {
+                    final fotoToDelete = _extraImages[index];
+
+                    // 🔥 NEW: Handle deletion properly for existing vs new photos
+                    if (fotoToDelete is Map && fotoToDelete['type'] == 'existing_url') {
+                      // Existing photo from database - mark for backend deletion
+                      final publicId = fotoToDelete['public_id']?.toString() ?? fotoToDelete['cloudinary_public_id']?.toString();
+                      if (publicId != null && publicId.isNotEmpty) {
+                        // 🔥 PREVENIR DUPLICADOS
+                        if (!_photosToDelete.contains(publicId)) {
+                          _photosToDelete.add(publicId);
+                          debugPrint('📝 Foto existente marcada para eliminación: $publicId');
+                        } else {
+                          debugPrint('⚠️ Foto ya marcada para eliminación: $publicId');
+                        }
+                        debugPrint('📝 Total fotos a eliminar: ${_photosToDelete.length}');
+                        debugPrint('📝 Lista completa: $_photosToDelete');
+                      } else {
+                        debugPrint('❌ No se encontró public_id en la foto: $fotoToDelete');
+                      }
+                    } else {
+                      // New photo (File/XFile) - just remove locally
+                      debugPrint('📝 Nueva foto removida localmente');
+                    }
+
                     setState(() {
                       _extraImages.removeAt(index);
                     });
+
+                    _showSnackBar(
+                      '🗑️ Foto eliminada (se aplicará al guardar)',
+                      isError: false
+                    );
                   },
                   child: Container(
                     decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(12)),
@@ -2519,16 +2667,44 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
                 itemCount: items.length,
                 itemBuilder: (context, index) {
                   final item = items[index];
+
+                  // 🔥 NEW: Handle existing URL objects from database
+                  if (item is Map && item['type'] == 'existing_url') {
+                    return InteractiveViewer(
+                      child: Image.network(
+                        item['url'],
+                        fit: BoxFit.contain,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return const Center(child: CircularProgressIndicator());
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Center(
+                            child: Icon(Icons.broken_image, color: Colors.white, size: 64),
+                          );
+                        },
+                      )
+                    );
+                  }
+
+                  // Handle String URLs (foto principal)
                   if (item is String) {
                     return InteractiveViewer(child: Image.network(item, fit: BoxFit.contain));
                   }
+
+                  // Handle XFile (web)
                   if (kIsWeb && item is XFile) {
                     return InteractiveViewer(child: Image.network(item.path, fit: BoxFit.contain));
                   }
+
+                  // Handle File (mobile)
                   if (item is File) {
                     return InteractiveViewer(child: Image.file(item, fit: BoxFit.contain));
                   }
-                  return const SizedBox();
+
+                  return const Center(
+                    child: Icon(Icons.broken_image, color: Colors.white, size: 64),
+                  );
                 },
               ),
               Positioned(
@@ -2544,5 +2720,44 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
         );
       },
     );
+  }
+
+  // 🗑️ ELIMINAR FOTO DEL BACKEND Y CLOUDINARY
+  Future<void> _deleteFotoFromBackend(int galloId, String publicId) async {
+    try {
+      debugPrint('🔍 Iniciando eliminación: gallo=$galloId, publicId=$publicId');
+
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('access_token');
+
+      // URL encode the public_id to handle special characters like "/"
+      final encodedPublicId = Uri.encodeComponent(publicId);
+      final url = 'https://gallerappback-production.up.railway.app/api/v1/gallos/$galloId/fotos/$encodedPublicId';
+      debugPrint('🌐 URL de eliminación: $url');
+      debugPrint('🔧 PublicId original: $publicId');
+      debugPrint('🔧 PublicId encoded: $encodedPublicId');
+
+      final response = await http.delete(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+
+      debugPrint('📡 Response status: ${response.statusCode}');
+      debugPrint('📡 Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ Foto eliminada correctamente del backend: $publicId');
+      } else {
+        debugPrint('❌ Error eliminando foto del backend: ${response.statusCode} - ${response.body}');
+        throw Exception('Error eliminando foto: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('❌ Error en _deleteFotoFromBackend: $e');
+      throw e;
+    }
   }
 }

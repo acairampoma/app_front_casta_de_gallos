@@ -144,7 +144,7 @@ class Publicacion {
 
     if (gallo is Map) {
       // Si gallo tiene los campos directamente
-      color = gallo['color']?.toString();
+      color = gallo['color']?.toString() ?? gallo['color_placa']?.toString();
       colorPatas = gallo['color_patas']?.toString();
       colorPlumaje = gallo['color_plumaje']?.toString();
       peso = toDouble(gallo['peso']);

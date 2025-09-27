@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/constants.dart';
+import 'gallo_service.dart';
 
 class MarketplaceService {
   final String baseUrl;
@@ -112,6 +113,25 @@ class MarketplaceService {
     return <Map<String, dynamic>>[];
   }
 
+  // 🔥 HELPER: ENRIQUECER GALLO CON DATOS COMPLETOS
+  Future<Map<String, dynamic>?> _enrichGalloWithFullData(int galloId) async {
+    try {
+      print('🔍 Enriqueciendo gallo ID: $galloId');
+      final galloCompleto = await GalloService.getGalloById(galloId);
+
+      if (galloCompleto != null) {
+        print('✅ Gallo enriquecido: ${galloCompleto['nombre']} - Color: ${galloCompleto['color']}, Color Patas: ${galloCompleto['color_patas']}, Color Plumaje: ${galloCompleto['color_plumaje']}');
+        return galloCompleto;
+      }
+
+      print('⚠️ No se pudo enriquecer gallo $galloId');
+      return null;
+    } catch (e) {
+      print('❌ Error enriqueciendo gallo $galloId: $e');
+      return null;
+    }
+  }
+
   Future<List<Map<String, dynamic>>> getPublicaciones({
     Map<String, dynamic>? filtros,
     int page = 1,
@@ -153,7 +173,7 @@ class MarketplaceService {
   }
 
   Future<List<Map<String, dynamic>>> getFavoritos({int page = 1, int pageSize = 20}) async {
-    print('🔥 === MARKETPLACE SERVICE - OBTENIENDO FAVORITOS ===');
+    print('🔥 === MARKETPLACE SERVICE - OBTENIENDO FAVORITOS ENRIQUECIDOS ===');
 
     final headers = await _authHeaders();
     final uri = _buildUri('/marketplace/favoritos', query: {
@@ -169,21 +189,71 @@ class MarketplaceService {
 
     if (res.statusCode == 200) {
       final data = json.decode(res.body);
-      final extracted = _extractList(data);
-      print('✅ === FAVORITOS EXTRAÍDOS: ${extracted.length} ===');
-      return extracted;
+      final favoritos = _extractList(data);
+      print('✅ === FAVORITOS EXTRAÍDOS: ${favoritos.length} ===');
+
+      // 🔥 ENRIQUECER CADA FAVORITO CON DATOS COMPLETOS DEL GALLO
+      final favoritosEnriquecidos = <Map<String, dynamic>>[];
+
+      for (final favorito in favoritos) {
+        final favoritoEnriquecido = Map<String, dynamic>.from(favorito);
+
+        // 🔍 DEBUG: Verificar estructura del favorito
+        print('🔍 FAVORITO KEYS: ${favorito.keys.toList()}');
+        print('🔍 GALLO_INFO: ${favorito['gallo_info']}');
+
+        // Obtener gallo_id con más opciones
+        final galloId = favorito['gallo_info']?['id'] ??
+                       favorito['gallo']?['id'] ??
+                       favorito['gallo_id'] ??
+                       favorito['publicacion']?['gallo_id'] ??
+                       favorito['id']; // Último recurso
+
+        print('🔍 GALLO_ID DETECTADO: $galloId');
+
+        if (galloId != null) {
+          print('🚀 INICIANDO ENRIQUECIMIENTO FAVORITO PARA GALLO_ID: $galloId');
+          final galloCompleto = await _enrichGalloWithFullData(galloId);
+          if (galloCompleto != null) {
+            print('✅ ENRIQUECIMIENTO FAVORITO EXITOSO - Campos disponibles: ${galloCompleto.keys.toList()}');
+
+            // Conservar las fotos originales del marketplace que pueden venir de otro lado
+            final fotosOriginales = favorito['gallo_info']?['fotos_adicionales'] ??
+                                  favorito['gallo']?['fotos_adicionales'] ??
+                                  favorito['fotos_adicionales'];
+
+            // Reemplazar gallo_info con datos completos pero conservando fotos si existen
+            favoritoEnriquecido['gallo_info'] = galloCompleto;
+
+            if (fotosOriginales != null) {
+              favoritoEnriquecido['gallo_info']['fotos_adicionales'] = fotosOriginales;
+            }
+          } else {
+            print('❌ ENRIQUECIMIENTO FAVORITO FALLÓ PARA GALLO_ID: $galloId');
+          }
+        } else {
+          print('❌ NO SE PUDO OBTENER GALLO_ID DEL FAVORITO');
+        }
+
+        favoritosEnriquecidos.add(favoritoEnriquecido);
+      }
+
+      print('✅ === FAVORITOS ENRIQUECIDOS: ${favoritosEnriquecidos.length} ===');
+      return favoritosEnriquecidos;
     }
     print('❌ Error ${res.statusCode}: ${res.body}');
     throw Exception('Error obteniendo favoritos (${res.statusCode}): ${res.body}');
   }
 
   Future<List<Map<String, dynamic>>> getMisPublicaciones({int page = 1, int pageSize = 20}) async {
-    print('🔥 === MARKETPLACE SERVICE - OBTENIENDO MIS PUBLICACIONES ===');
+    print('🔥 === MARKETPLACE SERVICE - OBTENIENDO MIS PUBLICACIONES EN VENTA ===');
 
     final headers = await _authHeaders();
     final uri = _buildUri('/marketplace/mis-publicaciones', query: {
       'page': page,
       'page_size': pageSize,
+      // 🔥 FILTRAR: null, pausado, en_venta (NO vendido)
+      'estados': 'en_venta,pausado,null',
     });
 
     print('🔍 Llamando: $uri');
@@ -194,9 +264,56 @@ class MarketplaceService {
 
     if (res.statusCode == 200) {
       final data = json.decode(res.body);
-      final extracted = _extractList(data);
-      print('✅ === MIS PUBLICACIONES EXTRAÍDAS: ${extracted.length} ===');
-      return extracted;
+      final publicaciones = _extractList(data);
+      print('✅ === MIS PUBLICACIONES EXTRAÍDAS: ${publicaciones.length} ===');
+
+      // 🔥 ENRIQUECER CADA PUBLICACIÓN CON DATOS COMPLETOS DEL GALLO
+      final publicacionesEnriquecidas = <Map<String, dynamic>>[];
+
+      for (final publicacion in publicaciones) {
+        final publicacionEnriquecida = Map<String, dynamic>.from(publicacion);
+
+        // 🔍 DEBUG: Verificar estructura de la publicación
+        print('🔍 PUBLICACION KEYS: ${publicacion.keys.toList()}');
+        print('🔍 GALLO_INFO: ${publicacion['gallo_info']}');
+
+        // Obtener gallo_id con más opciones
+        final galloId = publicacion['gallo_info']?['id'] ??
+                       publicacion['gallo']?['id'] ??
+                       publicacion['gallo_id'] ??
+                       publicacion['id']; // Último recurso
+
+        print('🔍 GALLO_ID DETECTADO: $galloId');
+
+        if (galloId != null) {
+          print('🚀 INICIANDO ENRIQUECIMIENTO PARA GALLO_ID: $galloId');
+          final galloCompleto = await _enrichGalloWithFullData(galloId);
+          if (galloCompleto != null) {
+            print('✅ ENRIQUECIMIENTO EXITOSO - Campos disponibles: ${galloCompleto.keys.toList()}');
+
+            // Conservar las fotos originales del marketplace que pueden venir de otro lado
+            final fotosOriginales = publicacion['gallo_info']?['fotos_adicionales'] ??
+                                  publicacion['gallo']?['fotos_adicionales'] ??
+                                  publicacion['fotos_adicionales'];
+
+            // Reemplazar gallo_info con datos completos pero conservando fotos si existen
+            publicacionEnriquecida['gallo_info'] = galloCompleto;
+
+            if (fotosOriginales != null) {
+              publicacionEnriquecida['gallo_info']['fotos_adicionales'] = fotosOriginales;
+            }
+          } else {
+            print('❌ ENRIQUECIMIENTO FALLÓ PARA GALLO_ID: $galloId');
+          }
+        } else {
+          print('❌ NO SE PUDO OBTENER GALLO_ID DE LA PUBLICACION');
+        }
+
+        publicacionesEnriquecidas.add(publicacionEnriquecida);
+      }
+
+      print('✅ === MIS PUBLICACIONES ENRIQUECIDAS: ${publicacionesEnriquecidas.length} ===');
+      return publicacionesEnriquecidas;
     }
     print('❌ Error ${res.statusCode}: ${res.body}');
     throw Exception('Error obteniendo mis publicaciones (${res.statusCode}): ${res.body}');
@@ -307,5 +424,24 @@ class MarketplaceService {
       return json.decode(res.body);
     }
     throw Exception('Error actualizando publicación (${res.statusCode}): ${res.body}');
+  }
+
+  Future<Map<String, dynamic>> eliminarPublicacion(int publicacionId) async {
+    print('🔥 === MARKETPLACE SERVICE - ELIMINANDO PUBLICACIÓN $publicacionId ===');
+
+    final headers = await _authHeaders();
+    final uri = _buildUri('/marketplace/publicaciones/$publicacionId');
+
+    print('🔍 Llamando DELETE: $uri');
+
+    final res = await http.delete(uri, headers: headers);
+
+    print('📡 Status: ${res.statusCode}');
+    print('📝 Response: ${res.body}');
+
+    if (res.statusCode == 200 || res.statusCode == 204) {
+      return {'success': true, 'message': 'Publicación eliminada exitosamente'};
+    }
+    throw Exception('Error eliminando publicación (${res.statusCode}): ${res.body}');
   }
 }

@@ -93,14 +93,22 @@ class _PlanesScreenState extends State<PlanesScreen>
 
     // 1. CARGAR PLANES (CRÍTICO)
     try {
-      print('🔍 Cargando planes disponibles...');
+      print('🔍 Cargando planes disponibles desde API...');
       _planes = await SuscripcionService.obtenerPlanesDisponibles(incluirGratuito: true);
       _planesLoaded = true;
-      print('✅ Planes cargados: ${_planes.length}');
-    } catch (e) {
-      print('⚠️ Error cargando planes: $e');
+      print('✅ Planes API cargados exitosamente: ${_planes.length}');
+
+      // Debug: mostrar datos de los planes
+      for (var plan in _planes) {
+        print('📋 Plan: ${plan.nombre} - Gallos: ${plan.gallosMaximo} - Marketplace: ${plan.marketplacePublicacionesMax} - Streaming: ${plan.duracionSemanas} semanas');
+      }
+    } catch (e, stackTrace) {
+      print('❌ ERROR cargando planes desde API: $e');
+      print('📍 StackTrace: $stackTrace');
+      print('⚡ Usando planes por defecto como fallback...');
       _planes = _getPlanesDefault();
       _planesLoaded = true;
+      print('✅ Planes fallback cargados: ${_planes.length}');
     }
 
     // 2. CARGAR SUSCRIPCIÓN ACTUAL (NO CRÍTICO)
@@ -196,7 +204,7 @@ class _PlanesScreenState extends State<PlanesScreen>
     }
   }
 
-  /// 📋 Planes por defecto si el API falla
+  /// 📋 Planes por defecto si el API falla - valores reales BD
   List<PlanCatalogo> _getPlanesDefault() {
     return [
       PlanCatalogo(
@@ -205,52 +213,88 @@ class _PlanesScreenState extends State<PlanesScreen>
         nombre: 'Plan Gratuito',
         descripcion: 'Ideal para comenzar',
         precio: 0.0,
-        duracionDias: 365,
+        duracionDias: 30,
+        duracionSemanas: 0,
         gallosMaximo: 5,
         topesPorGallo: 2,
         peleasPorGallo: 2,
         vacunasPorGallo: 2,
-        caracteristicas: ['Hasta 5 gallos', '2 entrenamientos por gallo', '2 peleas por gallo', '2 vacunas por gallo'],
+        marketplacePublicacionesMax: 0,
+        caracteristicas: [
+          'Gallos: 5',
+          'Peleas: 2 por gallo',
+          'Topes: 2 por gallo',
+          'Vacunas: 2 por gallo',
+          'Marketplace: 0 publicaciones',
+          'Streaming: Sin acceso'
+        ],
       ),
       PlanCatalogo(
         id: 2,
         codigo: 'basico',
         nombre: 'Plan Básico',
         descripcion: 'Para criadores en crecimiento',
-        precio: 15.0,
-        duracionDias: 30,
-        gallosMaximo: 20,
-        topesPorGallo: 10,
-        peleasPorGallo: 10,
-        vacunasPorGallo: 10,
-        destacado: true,
-        caracteristicas: ['Hasta 20 gallos', '10 entrenamientos por gallo', '10 peleas por gallo', '10 vacunas por gallo', 'Soporte por email'],
+        precio: 50.0,
+        duracionDias: 7,
+        duracionSemanas: 1,
+        gallosMaximo: 50,
+        topesPorGallo: 2,
+        peleasPorGallo: 2,
+        vacunasPorGallo: 4,
+        marketplacePublicacionesMax: 3,
+        caracteristicas: [
+          'Gallos: 50',
+          'Peleas: 2 por gallo',
+          'Topes: 2 por gallo',
+          'Vacunas: 4 por gallo',
+          'Marketplace: 3 publicaciones',
+          'Streaming: 1 semana'
+        ],
       ),
       PlanCatalogo(
         id: 3,
         codigo: 'premium',
         nombre: 'Plan Premium',
         descripcion: 'Para criadores profesionales',
-        precio: 25.0,
-        duracionDias: 30,
-        gallosMaximo: 50,
-        topesPorGallo: 999,
-        peleasPorGallo: 999,
-        vacunasPorGallo: 999,
-        caracteristicas: ['Hasta 50 gallos', 'Entrenamientos ilimitados', 'Peleas ilimitadas', 'Vacunas ilimitadas', 'Analytics avanzado', 'Soporte prioritario'],
+        precio: 80.0,
+        duracionDias: 15,
+        duracionSemanas: 2,
+        gallosMaximo: 100,
+        topesPorGallo: 3,
+        peleasPorGallo: 3,
+        vacunasPorGallo: 4,
+        marketplacePublicacionesMax: 5,
+        destacado: true,
+        caracteristicas: [
+          'Gallos: 100',
+          'Peleas: 3 por gallo',
+          'Topes: 3 por gallo',
+          'Vacunas: 4 por gallo',
+          'Marketplace: 5 publicaciones',
+          'Streaming: 2 semanas'
+        ],
       ),
       PlanCatalogo(
         id: 4,
         codigo: 'profesional',
         nombre: 'Plan Profesional',
-        descripcion: 'Sin límites',
-        precio: 40.0,
+        descripcion: 'Para profesionales',
+        precio: 100.0,
         duracionDias: 30,
-        gallosMaximo: 999,
-        topesPorGallo: 999,
-        peleasPorGallo: 999,
-        vacunasPorGallo: 999,
-        caracteristicas: ['Gallos ILIMITADOS', 'Todo ilimitado', 'Marketplace integrado', 'IA avanzada', 'Soporte 24/7'],
+        duracionSemanas: 4,
+        gallosMaximo: 150,
+        topesPorGallo: 4,
+        peleasPorGallo: 4,
+        vacunasPorGallo: 4,
+        marketplacePublicacionesMax: 10,
+        caracteristicas: [
+          'Gallos: 150',
+          'Peleas: 4 por gallo',
+          'Topes: 4 por gallo',
+          'Vacunas: 4 por gallo',
+          'Marketplace: 10 publicaciones',
+          'Streaming: 4 semanas'
+        ],
       ),
     ];
   }

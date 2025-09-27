@@ -165,6 +165,46 @@ class _PublicacionCardState extends State<PublicacionCard> {
     }
   }
 
+  void _confirmarEliminar() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar eliminación'),
+        content: Text('¿Estás seguro de que deseas eliminar la publicación de "${widget.data?.nombre ?? 'este gallo'}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _eliminarPublicacion();
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _eliminarPublicacion() async {
+    try {
+      final service = MarketplaceService();
+      await service.eliminarPublicacion(widget.data!.id);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('🗑️ Publicación eliminada exitosamente')),
+      );
+      widget.onEstadoChanged?.call();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error eliminando publicación: $e')),
+      );
+    }
+  }
+
   void _mostrarCarruselFotos(BuildContext context, int initialIndex) {
     if (widget.data == null || widget.data!.fotos.isEmpty) return;
 
@@ -292,7 +332,7 @@ class _PublicacionCardState extends State<PublicacionCard> {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () {}, // TODO: Eliminar publicación
+              onPressed: () => _confirmarEliminar(),
               icon: const Icon(Icons.delete_outline, size: 16), // Más pequeño
               label: const Text('Eliminar', style: TextStyle(fontSize: 11)), // Más pequeño
               style: OutlinedButton.styleFrom(
@@ -335,13 +375,27 @@ class _PublicacionCardState extends State<PublicacionCard> {
             child: OutlinedButton.icon(
               onPressed: (widget.data?.vendedorTelefono ?? '').isEmpty
                   ? null
-                  : () => WhatsappService.openChat(
-                        phone: widget.data!.vendedorTelefono!,
-                        message: 'Hola, estoy interesado en ${widget.data!.nombre}',
-                      ),
-              icon: const Icon(Icons.chat, size: 16), // Más pequeño
-              label: const Text('Contactar', style: TextStyle(fontSize: 11)), // Más pequeño
+                  : () async {
+                      // 🔥 CAMBIO: Ahora sí abrir WhatsApp en pestaña 1
+                      try {
+                        await WhatsappService.openChat(
+                          phone: widget.data!.vendedorTelefono!,
+                          message: 'Hola, estoy interesado en ${widget.data!.nombre}',
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error abriendo WhatsApp: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+              icon: const Icon(Icons.chat, size: 16), // WhatsApp
+              label: const Text('Chat', style: TextStyle(fontSize: 11)), // WhatsApp
               style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.green, // Color verde como WhatsApp
+                side: const BorderSide(color: Colors.green), // Borde verde
                 minimumSize: const Size(0, 30), // Más compacto
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               ),

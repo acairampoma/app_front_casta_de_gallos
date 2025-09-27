@@ -27,6 +27,12 @@
 # Connectivity Plus
 -keep class dev.fluttercommunity.plus.connectivity.** { *; }
 
+# Android 15 - Edge-to-Edge Display Support
+-keep class androidx.core.** { *; }
+-keep class androidx.activity.** { *; }
+-dontwarn androidx.core.**
+-dontwarn androidx.activity.**
+
 # General
 -dontwarn javax.annotation.**
 -dontwarn org.conscrypt.**

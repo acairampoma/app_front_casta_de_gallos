@@ -307,38 +307,40 @@ class GalloServiceV2 {
     }
   }
 
-  // 📸 Helper: Agregar múltiples fotos adicionales al request (campo: fotos_adicionales[]) - DEPRECADO
+  // 📸 Helper: Agregar múltiples fotos adicionales con nombres específicos (foto_2, foto_3, foto_4)
   static Future<void> _addMultipleFotosToRequest(http.MultipartRequest request, List<dynamic> fotos) async {
-    // 🚫 VALIDAR LÍMITE DE 4 FOTOS
-    if (fotos.length > 4) {
-      print('⚠️ ADVERTENCIA: Intentando subir ${fotos.length} fotos, máximo permitido: 4');
-      fotos = fotos.take(4).toList(); // Limitar a las primeras 4
+    // 🚫 VALIDAR LÍMITE DE 3 FOTOS ADICIONALES (foto_2, foto_3, foto_4)
+    if (fotos.length > 3) {
+      print('⚠️ ADVERTENCIA: Intentando subir ${fotos.length} fotos adicionales, máximo permitido: 3');
+      fotos = fotos.take(3).toList(); // Limitar a las primeras 3
     }
 
-    int idx = 0;
-    for (final f in fotos) {
+    for (int i = 0; i < fotos.length; i++) {
+      final foto = fotos[i];
+      final fieldName = 'foto_${i + 2}'; // foto_2, foto_3, foto_4
+
       try {
-        if (kIsWeb && f is XFile) {
-          final bytes = await f.readAsBytes();
+        if (kIsWeb && foto is XFile) {
+          final bytes = await foto.readAsBytes();
           request.files.add(http.MultipartFile.fromBytes(
-            'fotos_adicionales[]',
+            fieldName,
             bytes,
-            filename: f.name.isNotEmpty ? f.name : 'adicional_$idx.jpg',
+            filename: foto.name.isNotEmpty ? foto.name : '${fieldName}.jpg',
           ));
-        } else if (f is File) {
+        } else if (foto is File) {
           request.files.add(await http.MultipartFile.fromPath(
-            'fotos_adicionales[]',
-            f.path,
-            filename: 'adicional_$idx.jpg',
+            fieldName,
+            foto.path,
+            filename: '${fieldName}.jpg',
           ));
         }
+        print('✅ Foto adicional agregada como $fieldName');
       } catch (e) {
-        print('⚠️ Error agregando foto adicional #$idx: $e');
+        print('⚠️ Error agregando foto adicional #${i + 2}: $e');
+        continue;
       }
-      idx++;
     }
-    final added = request.files.where((x) => x.field == 'fotos_adicionales[]').length;
-    print('✅ Fotos adicionales agregadas: $added (DEPRECADO)');
+    print('✅ Total fotos adicionales agregadas: ${fotos.length}');
   }
 
   // 📸 Helper: Agregar foto al request

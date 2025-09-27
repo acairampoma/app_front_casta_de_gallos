@@ -246,7 +246,7 @@ class _PlanCardState extends State<PlanCard>
 
   Widget _buildCaracteristicas() {
     final caracteristicas = [
-      // 🥇 PRIMERA PRIORIDAD: STREAMING
+      // 1️⃣ STREAMING
       _CaracteristicaPlan(
         icono: '📺',
         titulo: 'Streaming',
@@ -254,15 +254,17 @@ class _PlanCardState extends State<PlanCard>
         esDestacado: true,
       ),
 
-      // 🥈 SEGUNDA PRIORIDAD: MARKETPLACE (basado en videos_ilimitados)
+      // 2️⃣ MARKETPLACE
       _CaracteristicaPlan(
         icono: '🏪',
         titulo: 'Marketplace',
-        valor: widget.plan.videosIlimitados ? 'Acceso completo' : 'Limitado',
-        esDestacado: widget.plan.videosIlimitados,
+        valor: widget.plan.marketplacePublicacionesMax == null || widget.plan.marketplacePublicacionesMax! <= 0
+            ? 'Sin acceso'
+            : '${widget.plan.marketplacePublicacionesMax} publicaciones',
+        esDestacado: widget.plan.marketplacePublicacionesMax != null && widget.plan.marketplacePublicacionesMax! > 0,
       ),
 
-      // 🥉 RESTO DE CARACTERÍSTICAS EN ORDEN
+      // 3️⃣ GALLOS
       _CaracteristicaPlan(
         icono: '🐓',
         titulo: 'Gallos',
@@ -270,6 +272,8 @@ class _PlanCardState extends State<PlanCard>
             ? 'Ilimitados'
             : '${widget.plan.gallosMaximo}',
       ),
+
+      // 4️⃣ PELEAS
       _CaracteristicaPlan(
         icono: '🥊',
         titulo: 'Peleas',
@@ -277,13 +281,17 @@ class _PlanCardState extends State<PlanCard>
             ? 'Ilimitadas'
             : '${widget.plan.peleasPorGallo} por gallo',
       ),
+
+      // 5️⃣ TOPES (ENTRENAMIENTOS)
       _CaracteristicaPlan(
         icono: '🏋️',
-        titulo: 'Entrenamientos',
+        titulo: 'Topes',
         valor: widget.plan.topesPorGallo == -1
             ? 'Ilimitados'
             : '${widget.plan.topesPorGallo} por gallo',
       ),
+
+      // 6️⃣ VACUNAS
       _CaracteristicaPlan(
         icono: '💉',
         titulo: 'Vacunas',
@@ -291,29 +299,6 @@ class _PlanCardState extends State<PlanCard>
             ? 'Ilimitadas'
             : '${widget.plan.vacunasPorGallo} por gallo',
       ),
-
-      // 📊 CARACTERÍSTICAS ADICIONALES DE LA BD
-      if (widget.plan.soportePremium)
-        _CaracteristicaPlan(
-          icono: '🎧',
-          titulo: 'Soporte Premium',
-          valor: 'Incluido',
-        ),
-
-      if (widget.plan.respaldoNube)
-        _CaracteristicaPlan(
-          icono: '☁️',
-          titulo: 'Respaldo Nube',
-          valor: 'Automático',
-        ),
-
-      if (widget.plan.estadisticasAvanzadas)
-        _CaracteristicaPlan(
-          icono: '📈',
-          titulo: 'Estadísticas',
-          valor: 'Avanzadas',
-          esDestacado: true,
-        ),
     ];
 
     return Column(
@@ -565,8 +550,11 @@ class _PlanCardState extends State<PlanCard>
 
   /// 📺 Obtener período de acceso a streaming desde datos de BD
   String _getAccesoStreaming() {
-    // ✅ Usar duracionStreaming del modelo que lee desde BD
-    return widget.plan.duracionStreaming;
+    // ✅ Usar duracionSemanas del modelo que lee desde BD
+    if (widget.plan.duracionSemanas == null || widget.plan.duracionSemanas! <= 0) {
+      return 'Sin acceso';
+    }
+    return '${widget.plan.duracionSemanas} semanas';
   }
 }
 

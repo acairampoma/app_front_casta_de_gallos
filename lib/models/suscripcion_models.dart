@@ -156,6 +156,7 @@ class PlanCatalogo {
   final int topesPorGallo;
   final int peleasPorGallo;
   final int vacunasPorGallo;
+  final int? marketplacePublicacionesMax;
   final bool soportePremium;
   final bool respaldoNube;
   final bool estadisticasAvanzadas;
@@ -177,6 +178,7 @@ class PlanCatalogo {
     required this.topesPorGallo,
     required this.peleasPorGallo,
     required this.vacunasPorGallo,
+    this.marketplacePublicacionesMax,
     this.soportePremium = false,
     this.respaldoNube = false,
     this.estadisticasAvanzadas = false,
@@ -203,6 +205,7 @@ class PlanCatalogo {
       topesPorGallo: json['topes_por_gallo'] ?? 2,
       peleasPorGallo: json['peleas_por_gallo'] ?? 2,
       vacunasPorGallo: json['vacunas_por_gallo'] ?? 2,
+      marketplacePublicacionesMax: json['marketplace_publicaciones_max'],
       soportePremium: json['soporte_premium'] ?? false,
       respaldoNube: json['respaldo_nube'] ?? false,
       estadisticasAvanzadas: json['estadisticas_avanzadas'] ?? false,
