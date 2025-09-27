@@ -13,10 +13,13 @@ COPY pubspec.lock ./
 # Instalar dependencias
 RUN flutter pub get
 
+# Limpiar caché de Flutter
+RUN flutter clean
+
 # Copiar el código fuente
 COPY . .
 
-# Construir la aplicación web
+# Construir la aplicación web (sin --web-renderer, deprecated in Flutter 3.35+)
 RUN flutter build web --release --base-href /
 
 # Etapa de producción - servidor HTTP ligero
