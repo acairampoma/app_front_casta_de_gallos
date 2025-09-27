@@ -1,5 +1,5 @@
 # 🌐 Dockerfile para Flutter Web - Casta de Gallos
-# Optimizado para Railway deployment con Dart SDK 3.9.x
+# Optimizado para Railway deployment con Flutter 3.35.2
 
 FROM ghcr.io/cirruslabs/flutter:3.35.2 AS build
 
