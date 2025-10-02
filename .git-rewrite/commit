@@ -1,0 +1,6 @@
+tree 9a781a31966cd89f0f18a53b38497639592096a3
+parent 56d7b29672552a08e20b43f8faeef7e3e0d50c14
+author Alan Cairampoma <alancairampoma@gmail.com> 1756271477 -0500
+committer Alan Cairampoma <alancairampoma@gmail.com> 1756271477 -0500
+
+Fix Codemagic configuration and add production main

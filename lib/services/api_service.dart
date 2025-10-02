@@ -519,8 +519,297 @@ class ApiService {
     }
   }
 
+  // ========================================
+  // 🥊 PELEAS DE EVENTO - EVENT FIGHTS API
+  // ========================================
+
+  // 📋 Listar peleas de un evento
+  static Future<List<Map<String, dynamic>>> getPeleasEvento(int eventoId) async {
+    try {
+      final authHeaders = await _getAuthHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/v1/transmisiones/eventos/$eventoId/peleas'),
+        headers: authHeaders,
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.cast<Map<String, dynamic>>();
+      } else {
+        throw ApiException('Error obteniendo peleas del evento');
+      }
+    } catch (e) {
+      throw ApiException('Error de conexión: $e');
+    }
+  }
+
+  // ➕ Crear pelea de evento
+  static Future<Map<String, dynamic>> crearPeleaEvento({
+    required int eventoId,
+    required int numeroPelea,
+    required String tituloPelea,
+    required String galponIzquierda,
+    required String galloIzquierdaNombre,
+    required String galponDerecha,
+    required String galloDerechaNombre,
+    String? descripcionPelea,
+    String? horaInicioEstimada,
+    File? video,
+  }) async {
+    try {
+      final authHeaders = await _getAuthHeaders();
+
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/api/v1/transmisiones/eventos/$eventoId/peleas'),
+      );
+
+      request.headers.addAll(authHeaders);
+
+      // Campos obligatorios
+      request.fields['numero_pelea'] = numeroPelea.toString();
+      request.fields['titulo_pelea'] = tituloPelea;
+      request.fields['galpon_izquierda'] = galponIzquierda;
+      request.fields['gallo_izquierda_nombre'] = galloIzquierdaNombre;
+      request.fields['galpon_derecha'] = galponDerecha;
+      request.fields['gallo_derecha_nombre'] = galloDerechaNombre;
+
+      // Campos opcionales
+      if (descripcionPelea != null) {
+        request.fields['descripcion_pelea'] = descripcionPelea;
+      }
+      if (horaInicioEstimada != null) {
+        request.fields['hora_inicio_estimada'] = horaInicioEstimada;
+      }
+
+      // Video opcional
+      if (video != null) {
+        final multipartFile = await http.MultipartFile.fromPath(
+          'video',
+          video.path,
+        );
+        request.files.add(multipartFile);
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        return data;
+      } else {
+        final error = jsonDecode(response.body);
+        throw ApiException(error['message'] ?? error['detail'] ?? 'Error creando pelea');
+      }
+    } catch (e) {
+      throw ApiException('Error creando pelea: $e');
+    }
+  }
+
+  // 🔍 Obtener pelea específica
+  static Future<Map<String, dynamic>> getPeleaEvento(int peleaId) async {
+    try {
+      final authHeaders = await _getAuthHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/v1/transmisiones/eventos/peleas/$peleaId'),
+        headers: authHeaders,
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data;
+      } else {
+        throw ApiException('Error obteniendo pelea');
+      }
+    } catch (e) {
+      throw ApiException('Error de conexión: $e');
+    }
+  }
+
+  // ✏️ Actualizar pelea de evento
+  static Future<Map<String, dynamic>> actualizarPeleaEvento({
+    required int peleaId,
+    String? tituloPelea,
+    String? descripcionPelea,
+    String? galponIzquierda,
+    String? galloIzquierdaNombre,
+    String? galponDerecha,
+    String? galloDerechaNombre,
+    String? horaInicioEstimada,
+    String? resultado,
+    File? video,
+  }) async {
+    try {
+      final authHeaders = await _getAuthHeaders();
+
+      final request = http.MultipartRequest(
+        'PUT',
+        Uri.parse('$baseUrl/api/v1/transmisiones/eventos/peleas/$peleaId'),
+      );
+
+      request.headers.addAll(authHeaders);
+
+      // Solo agregar campos que no son null
+      if (tituloPelea != null) request.fields['titulo_pelea'] = tituloPelea;
+      if (descripcionPelea != null) request.fields['descripcion_pelea'] = descripcionPelea;
+      if (galponIzquierda != null) request.fields['galpon_izquierda'] = galponIzquierda;
+      if (galloIzquierdaNombre != null) request.fields['gallo_izquierda_nombre'] = galloIzquierdaNombre;
+      if (galponDerecha != null) request.fields['galpon_derecha'] = galponDerecha;
+      if (galloDerechaNombre != null) request.fields['gallo_derecha_nombre'] = galloDerechaNombre;
+      if (horaInicioEstimada != null) request.fields['hora_inicio_estimada'] = horaInicioEstimada;
+      if (resultado != null) request.fields['resultado'] = resultado;
+
+      // Video opcional
+      if (video != null) {
+        final multipartFile = await http.MultipartFile.fromPath(
+          'video',
+          video.path,
+        );
+        request.files.add(multipartFile);
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data;
+      } else {
+        final error = jsonDecode(response.body);
+        throw ApiException(error['message'] ?? error['detail'] ?? 'Error actualizando pelea');
+      }
+    } catch (e) {
+      throw ApiException('Error actualizando pelea: $e');
+    }
+  }
+
+  // 🔄 Actualizar orden de pelea
+  static Future<Map<String, dynamic>> actualizarOrdenPelea({
+    required int peleaId,
+    required int nuevoNumero,
+  }) async {
+    try {
+      final authHeaders = await _getAuthHeaders();
+
+      final request = http.MultipartRequest(
+        'PUT',
+        Uri.parse('$baseUrl/api/v1/transmisiones/eventos/peleas/$peleaId/orden'),
+      );
+
+      request.headers.addAll(authHeaders);
+      request.fields['nuevo_numero'] = nuevoNumero.toString();
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data;
+      } else {
+        final error = jsonDecode(response.body);
+        throw ApiException(error['message'] ?? error['detail'] ?? 'Error actualizando orden');
+      }
+    } catch (e) {
+      throw ApiException('Error actualizando orden: $e');
+    }
+  }
+
+  // 🗑️ Eliminar pelea de evento
+  static Future<void> deletePeleaEvento(int peleaId) async {
+    try {
+      final authHeaders = await _getAuthHeaders();
+      final response = await http.delete(
+        Uri.parse('$baseUrl/api/v1/transmisiones/eventos/peleas/$peleaId'),
+        headers: authHeaders,
+      );
+
+      if (response.statusCode != 204 && response.statusCode != 200) {
+        final error = jsonDecode(response.body);
+        throw ApiException(error['message'] ?? error['detail'] ?? 'Error eliminando pelea');
+      }
+    } catch (e) {
+      throw ApiException('Error eliminando pelea: $e');
+    }
+  }
+
+  // 📄 Generar PDF de relación de peleas
+  static Future<Map<String, dynamic>> getPDFRelacionPeleas(int eventoId) async {
+    try {
+      final authHeaders = await _getAuthHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/v1/transmisiones/eventos/$eventoId/pdf'),
+        headers: authHeaders,
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data;
+      } else {
+        final error = jsonDecode(response.body);
+        throw ApiException(error['message'] ?? error['detail'] ?? 'Error generando PDF');
+      }
+    } catch (e) {
+      throw ApiException('Error generando PDF: $e');
+    }
+  }
+
+  // ========================================
+  // 📹 VIDEOTECA METHODS
+  // ========================================
+
+  /// Obtener videoteca con filtros
+  static Future<List<Map<String, dynamic>>> getVideoteca({
+    String? fechaInicio,
+    String? fechaFin,
+    int? coliseoId,
+  }) async {
+    try {
+      // Construir query params
+      final queryParams = <String, String>{};
+      if (fechaInicio != null && fechaInicio.isNotEmpty) {
+        queryParams['fecha_inicio'] = fechaInicio;
+      }
+      if (fechaFin != null && fechaFin.isNotEmpty) {
+        queryParams['fecha_fin'] = fechaFin;
+      }
+      if (coliseoId != null) {
+        queryParams['coliseo_id'] = coliseoId.toString();
+      }
+
+      // Construir URL con query string manualmente
+      String url = '$baseUrl/api/v1/transmisiones/eventos/videoteca';
+      if (queryParams.isNotEmpty) {
+        final queryString = queryParams.entries
+            .map((e) => '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
+            .join('&');
+        url = '$url?$queryString';
+      }
+
+      print('🎬 API: Llamando videoteca: $url');
+
+      final response = await http.get(Uri.parse(url), headers: headers);
+
+      print('🎬 API: Status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        print('🎬 API: Eventos encontrados: ${data.length}');
+        return data.cast<Map<String, dynamic>>();
+      } else {
+        print('❌ API Error: ${response.body}');
+        final error = jsonDecode(response.body);
+        throw ApiException(error['message'] ?? error['detail'] ?? 'Error obteniendo videoteca');
+      }
+    } catch (e) {
+      print('❌ API Exception: $e');
+      throw ApiException('Error obteniendo videoteca: $e');
+    }
+  }
+
+  // ========================================
   // 🔐 PASSWORD RECOVERY METHODS
-  
+  // ========================================
+
   // Solicitar código de recuperación de contraseña
   static Future<Map<String, dynamic>> forgotPassword(String email) async {
     try {

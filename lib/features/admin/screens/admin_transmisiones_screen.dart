@@ -12,6 +12,7 @@ import '../../../services/admin_service.dart';
 import '../../../config/adaptive_ui_config.dart';
 import 'formulario_coliseo_screen.dart';
 import 'formulario_evento_screen.dart';
+import 'gestion_peleas_evento_screen.dart';
 
 class AdminTransmisionesScreen extends StatefulWidget {
   const AdminTransmisionesScreen({Key? key}) : super(key: key);
@@ -963,15 +964,27 @@ class _AdminTransmisionesScreenState extends State<AdminTransmisionesScreen>
 
   // 📺 Card de Evento
   Widget _buildEventoCard(Map<String, dynamic> evento) {
-    return Card(
-      elevation: 4,
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return GestureDetector(
+      onDoubleTap: () {
+        // Navegar a gestión de peleas del evento
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => GestionPeleasEventoScreen(evento: evento),
+          ),
+        );
+      },
+      child: Tooltip(
+        message: 'Doble clic para gestionar peleas',
+        child: Card(
+        elevation: 4,
+        margin: const EdgeInsets.only(bottom: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             // Header con estado
             Row(
               children: [
@@ -1066,7 +1079,9 @@ class _AdminTransmisionesScreenState extends State<AdminTransmisionesScreen>
             if (evento['precio_entrada'] != null)
               _buildInfoRowEvento(Icons.attach_money, 'Precio',
                            'S/. ${evento['precio_entrada']}'),
-          ],
+            ],
+          ),
+        ),
         ),
       ),
     );

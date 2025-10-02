@@ -8,8 +8,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/widgets/base_screen.dart';
+import '../../../shared/widgets/video_player_widget.dart';
 import '../../../config/adaptive_ui_config.dart';
+import '../../../services/api_service.dart';
 import 'transmision_en_vivo_screen.dart';
+import 'videoteca_peleas_screen.dart';
 
 class TransmisionesScreen extends StatefulWidget {
   const TransmisionesScreen({Key? key}) : super(key: key);
@@ -18,48 +21,122 @@ class TransmisionesScreen extends StatefulWidget {
   State<TransmisionesScreen> createState() => _TransmisionesScreenState();
 }
 
-class _TransmisionesScreenState extends State<TransmisionesScreen> {
+class _TransmisionesScreenState extends State<TransmisionesScreen>
+    with TickerProviderStateMixin {
   final DateFormat _dateFormatter = DateFormat('dd/MM/yyyy');
   final DateFormat _timeFormatter = DateFormat('HH:mm');
+
+  // 🎛️ TAB CONTROLLER
+  late TabController _tabController;
 
   // 📊 ESTADO DE DATOS
   List<Map<String, dynamic>> _eventos = [];
   List<Map<String, dynamic>> _eventosHoy = [];
   List<Map<String, dynamic>> _coliseos = [];
+  List<Map<String, dynamic>> _videoteca = [];
 
   // 🔄 ESTADOS DE CARGA
   bool _isLoadingEventos = false;
   bool _isLoadingColiseos = false;
+  bool _isLoadingVideoteca = false;
   String? _errorEventos;
+  String? _errorVideoteca;
 
   // 🎯 FILTROS
   String _filtroEventos = "todos";
   String? _coliseoSeleccionado;
   DateTime? _fechaSeleccionada;
 
+  // 🎯 FILTROS VIDEOTECA
+  DateTime? _fechaInicioVideoteca;
+  DateTime? _fechaFinVideoteca;
+  int? _coliseoVideoteca;
+
   @override
   void initState() {
     super.initState();
     print('📺 [TRANSMISIONES-USER] === INICIANDO TRANSMISIONES USUARIOS ===');
+    _tabController = TabController(length: 2, vsync: this);
     _cargarColiseos();
     _cargarEventos();
+
+    _tabController.addListener(() {
+      if (_tabController.index == 1 && _videoteca.isEmpty) {
+        _cargarVideoteca();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return BaseScreen(
-      title: 'Transmisiones en Vivo',
+      title: 'Transmisiones',
       child: Column(
         children: [
-          // Header con bienvenida y filtros
-          _buildHeaderSection(),
+          // Tabs
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: TabBar(
+              controller: _tabController,
+              labelColor: AppColors.primary,
+              unselectedLabelColor: Colors.grey[600],
+              indicatorColor: AppColors.primary,
+              indicatorWeight: 3,
+              tabs: const [
+                Tab(
+                  icon: Icon(Icons.live_tv),
+                  text: 'En Vivo',
+                ),
+                Tab(
+                  icon: Icon(Icons.video_library),
+                  text: 'Videoteca',
+                ),
+              ],
+            ),
+          ),
 
-          // Contenido principal
+          // Tab Views
           Expanded(
-            child: _buildEventosContent(),
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildEnVivoTab(),
+                _buildVideotecaTab(),
+              ],
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  // 📺 TAB 1: En Vivo
+  Widget _buildEnVivoTab() {
+    return Column(
+      children: [
+        // Header con bienvenida y filtros
+        _buildHeaderSection(),
+
+        // Contenido principal
+        Expanded(
+          child: _buildEventosContent(),
+        ),
+      ],
     );
   }
 
@@ -934,6 +1011,493 @@ class _TransmisionesScreenState extends State<TransmisionesScreen> {
       MaterialPageRoute(
         builder: (context) => TransmisionEnVivoScreen(evento: evento),
       ),
+    );
+  }
+
+  // ========================================
+  // 📹 VIDEOTECA TAB
+  // ========================================
+
+  Widget _buildVideotecaTab() {
+    return Column(
+      children: [
+        _buildFiltrosVideoteca(),
+        Expanded(
+          child: _isLoadingVideoteca
+              ? const Center(child: CircularProgressIndicator())
+              : _errorVideoteca != null
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+                          const SizedBox(height: 16),
+                          Text(_errorVideoteca!, textAlign: TextAlign.center),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: _cargarVideoteca,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Reintentar'),
+                          ),
+                        ],
+                      ),
+                    )
+                  : _videoteca.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.video_library_outlined, size: 64, color: Colors.grey[400]),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No hay videos disponibles',
+                                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: _videoteca.length,
+                          itemBuilder: (context, index) {
+                            final evento = _videoteca[index];
+                            return _buildVideotecaEventoCard(evento);
+                          },
+                        ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFiltrosVideoteca() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.filter_list, color: AppColors.primary, size: 20),
+              const SizedBox(width: 8),
+              const Text(
+                'Filtrar videos',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Filtro por fechas
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () => _seleccionarFechaVideoteca(true),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_today, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          _fechaInicioVideoteca != null
+                              ? _dateFormatter.format(_fechaInicioVideoteca!)
+                              : 'Fecha inicio',
+                          style: TextStyle(
+                            color: _fechaInicioVideoteca != null
+                                ? Colors.black
+                                : Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text('—'),
+              const SizedBox(width: 8),
+              Expanded(
+                child: InkWell(
+                  onTap: () => _seleccionarFechaVideoteca(false),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_today, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          _fechaFinVideoteca != null
+                              ? _dateFormatter.format(_fechaFinVideoteca!)
+                              : 'Fecha fin',
+                          style: TextStyle(
+                            color: _fechaFinVideoteca != null
+                                ? Colors.black
+                                : Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Filtro por coliseo
+          DropdownButtonFormField<int>(
+            value: _coliseoVideoteca,
+            decoration: const InputDecoration(
+              labelText: 'Coliseo',
+              prefixIcon: Icon(Icons.home_work),
+              border: OutlineInputBorder(),
+            ),
+            items: [
+              const DropdownMenuItem(
+                value: null,
+                child: Text('Todos los coliseos'),
+              ),
+              ..._coliseos.map((c) => DropdownMenuItem<int>(
+                    value: c['id'],
+                    child: Text(c['nombre']),
+                  )),
+            ],
+            onChanged: (value) {
+              setState(() => _coliseoVideoteca = value);
+              _cargarVideoteca();
+            },
+          ),
+          const SizedBox(height: 12),
+
+          // Botones
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _cargarVideoteca,
+                  icon: const Icon(Icons.search),
+                  label: const Text('Buscar'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _fechaInicioVideoteca = null;
+                    _fechaFinVideoteca = null;
+                    _coliseoVideoteca = null;
+                  });
+                  _cargarVideoteca();
+                },
+                icon: const Icon(Icons.clear),
+                label: const Text('Limpiar'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey[300],
+                  foregroundColor: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVideotecaContent() {
+    if (_isLoadingVideoteca) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorVideoteca != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+            const SizedBox(height: 16),
+            Text(
+              _errorVideoteca!,
+              style: const TextStyle(fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _cargarVideoteca,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Reintentar'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_videoteca.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.video_library_outlined, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              'No hay videos disponibles',
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Ajusta los filtros para buscar otros eventos',
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _videoteca.length,
+      itemBuilder: (context, index) {
+        final evento = _videoteca[index];
+        return _buildVideotecaEventoCard(evento);
+      },
+    );
+  }
+
+  Widget _buildVideotecaEventoCard(Map<String, dynamic> evento) {
+    final DateTime? fechaEvento = evento['fecha_evento'] != null
+        ? DateTime.tryParse(evento['fecha_evento'])
+        : null;
+
+    return Card(
+      elevation: 6,
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onDoubleTap: () => _verPeleasEvento(evento),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header con badge de archivo
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade700,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.video_library, size: 12, color: Colors.white),
+                        SizedBox(width: 4),
+                        Text(
+                          'VIDEOTECA',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Título
+              Text(
+                evento['titulo'] ?? 'Evento sin título',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 8),
+
+              // Coliseo
+              if (evento['coliseo'] != null) ...[
+                Row(
+                  children: [
+                    const Icon(Icons.home_work, size: 16, color: Colors.grey),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '${evento['coliseo']['nombre']} - ${evento['coliseo']['ciudad']}',
+                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
+
+              // Fecha
+              if (fechaEvento != null) ...[
+                Row(
+                  children: [
+                    const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                    const SizedBox(width: 8),
+                    Text(
+                      _dateFormatter.format(fechaEvento),
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ],
+
+              const SizedBox(height: 16),
+
+              // Botón para ver peleas
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _verPeleasEvento(evento),
+                  icon: const Icon(Icons.play_circle_outline),
+                  label: const Text('Ver Peleas Grabadas'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+
+              // Hint doble click
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.touch_app, size: 14, color: AppColors.primary),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Doble click para ver peleas',
+                      style: TextStyle(fontSize: 12, color: AppColors.primary),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ========================================
+  // 🎬 MÉTODOS DE VIDEOTECA
+  // ========================================
+
+  Future<void> _cargarVideoteca() async {
+    setState(() {
+      _isLoadingVideoteca = true;
+      _errorVideoteca = null;
+    });
+
+    try {
+      final videoteca = await ApiService.getVideoteca(
+        fechaInicio: _fechaInicioVideoteca != null
+            ? DateFormat('yyyy-MM-dd').format(_fechaInicioVideoteca!)
+            : null,
+        fechaFin: _fechaFinVideoteca != null
+            ? DateFormat('yyyy-MM-dd').format(_fechaFinVideoteca!)
+            : null,
+        coliseoId: _coliseoVideoteca,
+      );
+
+      setState(() {
+        _videoteca = videoteca;
+        _isLoadingVideoteca = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorVideoteca = 'Error cargando videoteca: $e';
+        _isLoadingVideoteca = false;
+      });
+    }
+  }
+
+  void _verPeleasEvento(Map<String, dynamic> evento) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => VideotecaPeleasScreen(evento: evento),
+      ),
+    );
+  }
+
+  Future<void> _seleccionarFechaVideoteca(bool esInicio) async {
+    final fecha = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+    );
+
+    if (fecha != null) {
+      setState(() {
+        if (esInicio) {
+          _fechaInicioVideoteca = fecha;
+        } else {
+          _fechaFinVideoteca = fecha;
+        }
+      });
+    }
+  }
+
+  void _reproducirVideo(Map<String, dynamic> pelea) {
+    final videoUrl = pelea['video_url'];
+    if (videoUrl == null || videoUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Video no disponible'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    VideoPlayerModal.show(
+      context,
+      videoUrl: videoUrl,
+      title: '${pelea['numero_pelea']}. ${pelea['titulo_pelea']}',
     );
   }
 }
