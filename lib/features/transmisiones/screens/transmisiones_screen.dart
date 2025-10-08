@@ -1006,6 +1006,43 @@ class _TransmisionesScreenState extends State<TransmisionesScreen>
       return;
     }
 
+    // 🎉 PROMOCIÓN TEMPORAL - SEMANA DE LANZAMIENTO 🎉
+    // ⚠️ ACCESO LIBRE A TRANSMISIONES PARA TODOS LOS USUARIOS
+    // TODO: Después de la semana promocional, activar validación de suscripción:
+    // - Plan Gratuito: NO puede ver transmisiones en vivo
+    // - Plan Básico: Puede ver transmisiones gratuitas
+    // - Plan Premium: Acceso completo a todas las transmisiones
+
+    // CÓDIGO PARA ACTIVAR DESPUÉS DE LA PROMOCIÓN:
+    /*
+    final bool esPremium = evento['es_premium'] ?? false;
+    final bool usuarioTienePremium = ... // obtener del perfil
+
+    if (esPremium && !usuarioTienePremium) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('⭐ Contenido Premium'),
+          content: const Text('Esta transmisión requiere suscripción Premium'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                // Navegar a pantalla de suscripciones
+              },
+              child: const Text('Ver Planes'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    */
+
     Navigator.push(
       context,
       MaterialPageRoute(

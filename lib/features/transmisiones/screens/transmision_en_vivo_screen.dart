@@ -6,6 +6,11 @@ import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../../../shared/theme/app_colors.dart';
 
+// 🎉 PROMOCIÓN TEMPORAL - SEMANA DE LANZAMIENTO 🎉
+// ⚠️ ACCESO LIBRE: Todos los usuarios pueden ver transmisiones en vivo
+// sin restricciones de suscripción durante la semana promocional
+// TODO: Después de la promoción, implementar validación de planes
+
 class TransmisionEnVivoScreen extends StatefulWidget {
   final Map<String, dynamic> evento;
 

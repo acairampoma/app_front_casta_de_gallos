@@ -4,13 +4,13 @@
 
 ### 1. **pubspec.yaml** ⭐ PRINCIPAL
 ```yaml
-version: 1.6.0+901
+version: 1.6.1+905
 ```
 
 ### 2. **android/local.properties** ⚠️ PUEDE SOBRESCRIBIR
 ```properties
-flutter.versionName=1.6.0
-flutter.versionCode=901
+flutter.versionName=1.6.1
+flutter.versionCode=905
 ```
 
 ### 3. **android/app/build.gradle** ℹ️ REFERENCIAS
@@ -28,7 +28,9 @@ versionName flutterVersionName
 | 1.1.2   | 850    | ❌ USADO | Anterior | Ya en Play Store |
 | 1.6.0   | 860    | ❌ USADO | Anterior | Ya en Play Store |
 | 1.6.0   | 900    | ❌ USADO | Anterior | Ya en Play Store |
-| 1.6.0   | 901    | 🟡 PREPARANDO | Hoy | Marketplace fixes |
+| 1.6.0   | 901    | ❌ USADO | Anterior | Marketplace fixes |
+| 1.6.1   | 904    | ❌ USADO | Anterior | Ya en Play Store |
+| 1.6.1   | 905    | 🟡 PREPARANDO | 2025-10-08 | Promoción transmisiones + Marketplace fix estados |
 
 ---
 
@@ -37,9 +39,9 @@ versionName flutterVersionName
 Antes de subir al Play Store:
 
 ### **1. Verificar Versiones**
-- [ ] `pubspec.yaml` - version: 1.6.0+901
-- [ ] `android/local.properties` - flutter.versionCode=901
-- [ ] Código único (no usado antes)
+- [x] `pubspec.yaml` - version: 1.6.1+905
+- [x] `android/local.properties` - flutter.versionCode=905
+- [x] Código único (no usado antes)
 
 ### **2. Build y Test**
 - [ ] `flutter clean`

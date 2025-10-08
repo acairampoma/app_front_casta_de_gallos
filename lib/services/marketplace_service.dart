@@ -250,10 +250,10 @@ class MarketplaceService {
 
     final headers = await _authHeaders();
     final uri = _buildUri('/marketplace/mis-publicaciones', query: {
-      'page': page,
-      'page_size': pageSize,
-      // 🔥 FILTRAR: null, pausado, en_venta (NO vendido)
-      'estados': 'en_venta,pausado,null',
+      'skip': (page - 1) * pageSize,
+      'limit': pageSize,
+      // 🔥 FILTRAR: venta y pausado (NO vendido)
+      'estados': 'venta,pausado',
     });
 
     print('🔍 Llamando: $uri');
