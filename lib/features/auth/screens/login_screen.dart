@@ -7,9 +7,11 @@ import '../../../services/auth_service.dart';
 import '../../../services/admin_notification_service.dart';
 import '../../../services/user_notification_service.dart';
 import '../../../utils/password_validator.dart';
+import '../../../utils/email_validator.dart';
 import '../../../utils/device_utils.dart';
 import '../../home/screens/home_screen.dart';
 import 'forgot_password_screen.dart';
+import 'email_verification_screen.dart';
 
 // ==========================================
 // 🏆 MÓDULO DE USUARIOS ÉPICO Y COMPLETO
@@ -678,8 +680,6 @@ class _LoginScreenState extends State<LoginScreen>
         _isRegisterLoading = true;
       });
 
-      final navigator = Navigator.of(context, rootNavigator: true);
-
       try {
         final email = _regEmailController.text.trim();
         final password = _regPasswordController.text;
@@ -700,19 +700,12 @@ class _LoginScreenState extends State<LoginScreen>
 
         if (registerResponse != null) {
           print('✅ Usuario registrado exitosamente');
-          
-          // AUTO-LOGIN INMEDIATO
-          print('🔄 Iniciando auto-login...');
-          final loginSuccess = await AuthService.instance.login(email, password);
 
           setState(() {
             _isRegisterLoading = false;
           });
 
-          if (loginSuccess) {
-            final user = AuthService.instance.currentUser;
-            final profile = AuthService.instance.currentProfile;
-            
+          if (mounted) {
             // Limpiar formulario
             _regEmailController.clear();
             _regPasswordController.clear();
@@ -721,70 +714,45 @@ class _LoginScreenState extends State<LoginScreen>
             _regPropietarioController.clear();
             _regTelefonoController.clear();
 
-            // NAVEGACIÓN DIRECTA AL HOME
-            navigator.pushAndRemoveUntil(
+            // NAVEGAR A PANTALLA DE VERIFICACIÓN DE EMAIL
+            print('📧 Navegando a verificación de email...');
+            Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) => const HomeScreen(),
+                builder: (context) => EmailVerificationScreen(
+                  email: email,
+                  password: password,
+                  nombreCompleto: nombreCompleto,
+                  nombreGalpon: nombreGalpon.isNotEmpty ? nombreGalpon : null,
+                  telefono: telefono.isNotEmpty ? telefono : null,
+                ),
               ),
-              (route) => false,
             );
 
-            // MOSTRAR BIENVENIDA
-            await Future.delayed(const Duration(milliseconds: 800));
-            
-            final currentContext = navigator.context;
-            if (currentContext.mounted) {
-              ScaffoldMessenger.of(currentContext).showSnackBar(
-                SnackBar(
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('🎉 ¡Bienvenido a GalloApp Pro!', 
-                           style: TextStyle(fontWeight: FontWeight.bold)),
-                      Text('👤 Usuario: ${profile?.nombreCompleto ?? nombreCompleto}'),
-                      Text('🏠 Galpón: ${profile?.nombreGalpon ?? nombreGalpon}'),
-                      Text('✅ Cuenta creada y sesión iniciada automáticamente'),
-                    ],
-                  ),
-                  backgroundColor: AppColors.success,
-                  duration: const Duration(seconds: 5),
+            // Mostrar mensaje de confirmación
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '✅ ¡Cuenta creada exitosamente!',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Text('📧 Verifica tu email: $email'),
+                    const Text('🔐 Ingresa el código de 6 dígitos'),
+                  ],
                 ),
-              );
-            }
-          } else {
-            // Si falla el auto-login, redirigir al login con credenciales
-            print('⚠️ Auto-login falló, redirigiendo a login...');
-            
-            _loginEmailController.text = email;
-            _loginPasswordController.text = password;
-            
-            _navigateToScreen(0);
-            
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('✅ ¡Cuenta creada exitosamente!'),
-                      Text('👤 Usuario: $nombreCompleto'),
-                      Text('📧 Email: $email'),
-                      Text('🚀 Credenciales listas - Solo presiona "Iniciar Sesión"'),
-                    ],
-                  ),
-                  backgroundColor: Colors.blue,
-                  duration: const Duration(seconds: 4),
-                ),
-              );
-            }
+                backgroundColor: AppColors.success,
+                duration: const Duration(seconds: 4),
+              ),
+            );
           }
         } else {
           setState(() {
             _isRegisterLoading = false;
           });
-          
+
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -799,7 +767,7 @@ class _LoginScreenState extends State<LoginScreen>
         setState(() {
           _isRegisterLoading = false;
         });
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -1051,15 +1019,7 @@ class _LoginScreenState extends State<LoginScreen>
                     hint: 'tu@email.com',
                     icon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'El email es obligatorio';
-                      }
-                      if (!value.contains('@')) {
-                        return 'Ingresa un email válido';
-                      }
-                      return null;
-                    },
+                    validator: (value) => EmailValidator.validateEmail(value),
                   ),
                   const SizedBox(height: 16),
                   _buildEpicTextField(
