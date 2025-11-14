@@ -36,7 +36,7 @@ class AppLogo extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(size * 0.15),
             child: Image.asset(
-              'assets/images/logo/logo2.webp', // 🔥 NUEVO LOGO CASTA DE REYES
+              'assets/images/logo/logo2.webp', // 🔥 LOGO CASTA DE GALLOS
               fit: BoxFit.contain,
               width: size,
               height: size,
@@ -65,7 +65,7 @@ class AppLogo extends StatelessWidget {
         if (showText) ...[
           SizedBox(height: size * 0.1),
           Text(
-            'Casta de Reyes',
+            'Casta de Gallos',
             style: TextStyle(
               fontSize: size * 0.22,
               fontWeight: FontWeight.w900,

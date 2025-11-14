@@ -474,21 +474,23 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
   }
 
   Widget _buildCodeInputs() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(
-        6,
-        (index) => Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6),
-          child: SizedBox(
-            width: 50,
-            height: 60,
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 400),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: List.generate(
+          6,
+          (index) => Container(
+            width: 55,
+            height: 70,
+            margin: const EdgeInsets.symmetric(horizontal: 4),
             child: TextFormField(
               controller: _codeControllers[index],
               focusNode: _focusNodes[index],
               keyboardType: TextInputType.number,
               textAlign: TextAlign.center,
               maxLength: 1,
+              autofocus: index == 0,
               inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly,
               ],
@@ -503,21 +505,29 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
                 counterText: '',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(color: Colors.grey.shade400, width: 2),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade400, width: 2),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(
                     color: AppColors.primary,
-                    width: 2,
+                    width: 3,
                   ),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.red, width: 2),
                 ),
                 filled: true,
                 fillColor: Colors.white,
-                contentPadding: EdgeInsets.zero,
+                contentPadding: const EdgeInsets.symmetric(vertical: 16),
               ),
               style: const TextStyle(
-                fontSize: 24,
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
               ),
