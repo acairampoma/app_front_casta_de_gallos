@@ -631,6 +631,52 @@ class AuthService {
     }
   }
 
+  // 📧 VERIFICAR EMAIL CON CÓDIGO
+  Future<Map<String, dynamic>> verifyEmail(String email, String code) async {
+    try {
+      print('🔍 Verificando email: $email con código: $code');
+      
+      final response = await ApiService.verifyEmail(email, code);
+      
+      if (response['success'] == true) {
+        print('✅ Email verificado exitosamente');
+        return response;
+      } else {
+        print('❌ Error verificando email: ${response['message']}');
+        return response;
+      }
+    } catch (e) {
+      print('💥 Error en verifyEmail: $e');
+      return {
+        'success': false,
+        'message': 'Error de conexión: $e',
+      };
+    }
+  }
+
+  // 📧 REENVIAR CÓDIGO DE VERIFICACIÓN
+  Future<Map<String, dynamic>> resendVerificationCode(String email) async {
+    try {
+      print('📧 Reenviando código de verificación a: $email');
+      
+      final response = await ApiService.resendVerificationCode(email);
+      
+      if (response['success'] == true) {
+        print('✅ Código reenviado exitosamente');
+        return response;
+      } else {
+        print('❌ Error reenviando código: ${response['message']}');
+        return response;
+      }
+    } catch (e) {
+      print('💥 Error en resendVerificationCode: $e');
+      return {
+        'success': false,
+        'message': 'Error de conexión: $e',
+      };
+    }
+  }
+
   // 🗑️ LIMPIAR RECURSOS
   void dispose() {
     _authStateController.close();

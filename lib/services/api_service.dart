@@ -927,6 +927,83 @@ class ApiService {
       };
     }
   }
+
+  // 📧 VERIFICAR EMAIL CON CÓDIGO
+  static Future<Map<String, dynamic>> verifyEmail(String email, String code) async {
+    try {
+      print('🔍 API: Verificando email $email con código $code');
+      
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/verify-email'),
+        headers: headers,
+        body: jsonEncode({
+          'email': email,
+          'code': code,
+        }),
+      );
+
+      print('📡 Status: ${response.statusCode}');
+      print('📄 Response: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Email verificado exitosamente',
+        };
+      } else {
+        final data = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Código inválido o expirado',
+        };
+      }
+    } catch (e) {
+      print('💥 Error en verifyEmail: $e');
+      return {
+        'success': false,
+        'message': 'Error de conexión: $e',
+      };
+    }
+  }
+
+  // 📧 REENVIAR CÓDIGO DE VERIFICACIÓN
+  static Future<Map<String, dynamic>> resendVerificationCode(String email) async {
+    try {
+      print('📧 API: Reenviando código de verificación a $email');
+      
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/resend-verification'),
+        headers: headers,
+        body: jsonEncode({
+          'email': email,
+        }),
+      );
+
+      print('📡 Status: ${response.statusCode}');
+      print('📄 Response: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Código reenviado exitosamente',
+        };
+      } else {
+        final data = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Error reenviando código',
+        };
+      }
+    } catch (e) {
+      print('💥 Error en resendVerificationCode: $e');
+      return {
+        'success': false,
+        'message': 'Error de conexión: $e',
+      };
+    }
+  }
 }
 
 // 🔥 MODELOS DE DATOS
