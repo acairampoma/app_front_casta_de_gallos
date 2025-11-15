@@ -300,7 +300,8 @@ class AuthService {
       return registerResponse.message;
     } catch (e) {
       print('❌ Error en registro: $e');
-      return null;
+      // Re-lanzar la excepción para que el UI pueda manejarla
+      rethrow;
     }
   }
 
