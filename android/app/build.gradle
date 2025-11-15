@@ -107,9 +107,6 @@ android {
             // Force 16KB alignment for native libraries
             pickFirsts += ['**/libc++_shared.so', '**/libflutter.so']
         }
-        dex {
-            useLegacyPackaging = false
-        }
         // Ensure proper alignment for all native assets
         resources {
             excludes += ['META-INF/DEPENDENCIES', 'META-INF/LICENSE', 'META-INF/LICENSE.txt', 'META-INF/NOTICE', 'META-INF/NOTICE.txt']
