@@ -769,11 +769,164 @@ class _LoginScreenState extends State<LoginScreen>
         });
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('❌ Error de registro: $e'),
-              backgroundColor: Colors.red,
-            ),
+          // Extraer mensaje de error más amigable
+          String errorMessage = 'Error de registro';
+          String errorTitle = 'Error de Registro';
+          IconData errorIcon = Icons.error_outline;
+          Color errorColor = Colors.red;
+          bool showLoginButton = false;
+          
+          if (e.toString().contains('email ya está registrado') || 
+              e.toString().contains('already registered') ||
+              e.toString().contains('already exists')) {
+            errorTitle = '⚠️ Email Ya Registrado';
+            errorMessage = 'Este correo electrónico ya tiene una cuenta asociada.\n\n¿Ya tienes cuenta? Inicia sesión en su lugar.';
+            errorIcon = Icons.person_off_outlined;
+            errorColor = Colors.orange;
+            showLoginButton = true;
+          } else if (e.toString().contains('conexión') || 
+                     e.toString().contains('network') ||
+                     e.toString().contains('timeout')) {
+            errorTitle = '🌐 Error de Conexión';
+            errorMessage = 'No se pudo conectar con el servidor.\n\nVerifica tu conexión a internet e intenta nuevamente.';
+            errorIcon = Icons.wifi_off;
+          } else {
+            errorTitle = '❌ Error Inesperado';
+            errorMessage = e.toString().replaceAll('Error de conexión: ', '').replaceAll('Exception: ', '');
+          }
+
+          // Mostrar diálogo de error estilo SweetAlert
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext dialogContext) {
+              return AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                contentPadding: const EdgeInsets.all(24),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Icono de error
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: errorColor.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        errorIcon,
+                        color: errorColor,
+                        size: 48,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    
+                    // Título
+                    Text(
+                      errorTitle,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    
+                    // Mensaje
+                    Text(
+                      errorMessage,
+                      style: TextStyle(
+                        fontSize: 15,
+                        height: 1.5,
+                        color: Colors.grey.shade700,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    
+                    // Consejo adicional para email duplicado
+                    if (showLoginButton) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.blue.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Usa la opción "Iniciar Sesión" para acceder.',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.blue.shade700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Botones
+                    Row(
+                      children: [
+                        if (showLoginButton) ...[
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () {
+                                Navigator.of(dialogContext).pop();
+                                // Cambiar a pestaña de login
+                                _tabController.animateTo(0);
+                              },
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.primary,
+                                side: BorderSide(color: AppColors.primary, width: 2),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                'Iniciar Sesión',
+                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                        ],
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.of(dialogContext).pop(),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              showLoginButton ? 'Cerrar' : 'Entendido',
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
           );
         }
       }
