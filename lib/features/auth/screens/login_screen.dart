@@ -884,8 +884,8 @@ class _LoginScreenState extends State<LoginScreen>
                             child: OutlinedButton(
                               onPressed: () {
                                 Navigator.of(dialogContext).pop();
-                                // Cambiar a pestaña de login
-                                _tabController.animateTo(0);
+                                // Cambiar a pantalla de login
+                                _navigateToScreen(0);
                               },
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.primary,
