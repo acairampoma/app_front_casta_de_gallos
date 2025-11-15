@@ -334,10 +334,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
             const SizedBox(height: 40),
 
             // Campos de código
-            SlideTransition(
-              position: _shakeAnimation,
-              child: _buildCodeInputs(),
-            ),
+            _buildCodeInputs(),
 
             const SizedBox(height: 24),
 
@@ -474,66 +471,61 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
   }
 
   Widget _buildCodeInputs() {
-    // Obtener ancho de pantalla para hacer responsive
-    final screenWidth = MediaQuery.of(context).size.width;
-    final boxWidth = (screenWidth - 80) / 6; // 80 = padding total
-    final boxSize = boxWidth.clamp(45.0, 65.0); // Min 45, Max 65
+    print('📦 Construyendo cajas de código de verificación');
     
-    return Center(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: List.generate(
           6,
-          (index) => Container(
-            width: boxSize,
-            height: boxSize + 10,
-            margin: const EdgeInsets.symmetric(horizontal: 3),
-            child: TextFormField(
-              controller: _codeControllers[index],
-              focusNode: _focusNodes[index],
-              keyboardType: TextInputType.number,
-              textAlign: TextAlign.center,
-              maxLength: 1,
-              autofocus: index == 0,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-              ],
-              onChanged: (value) {
-                if (value.isEmpty) {
-                  _onBackspace(index, value);
-                } else {
-                  _onCodeChanged(index, value);
-                }
-              },
-              decoration: InputDecoration(
-                counterText: '',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade400, width: 2),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade400, width: 2),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: AppColors.primary,
-                    width: 3,
+          (index) => Expanded(
+            child: Container(
+              height: 60,
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              child: TextField(
+                controller: _codeControllers[index],
+                focusNode: _focusNodes[index],
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                maxLength: 1,
+                autofocus: index == 0,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+                onChanged: (value) {
+                  if (value.isEmpty) {
+                    _onBackspace(index, value);
+                  } else {
+                    _onCodeChanged(index, value);
+                  }
+                },
+                decoration: InputDecoration(
+                  counterText: '',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade400, width: 2),
                   ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade400, width: 2),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: AppColors.primary,
+                      width: 3,
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.all(8),
                 ),
-                errorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.red, width: 2),
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
                 ),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-              style: TextStyle(
-                fontSize: boxSize * 0.45, // Tamaño proporcional
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
               ),
             ),
           ),
