@@ -474,16 +474,20 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
   }
 
   Widget _buildCodeInputs() {
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 400),
+    // Obtener ancho de pantalla para hacer responsive
+    final screenWidth = MediaQuery.of(context).size.width;
+    final boxWidth = (screenWidth - 80) / 6; // 80 = padding total
+    final boxSize = boxWidth.clamp(45.0, 65.0); // Min 45, Max 65
+    
+    return Center(
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(
           6,
           (index) => Container(
-            width: 55,
-            height: 70,
-            margin: const EdgeInsets.symmetric(horizontal: 4),
+            width: boxSize,
+            height: boxSize + 10,
+            margin: const EdgeInsets.symmetric(horizontal: 3),
             child: TextFormField(
               controller: _codeControllers[index],
               focusNode: _focusNodes[index],
@@ -524,10 +528,10 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
                 ),
                 filled: true,
                 fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              style: const TextStyle(
-                fontSize: 28,
+              style: TextStyle(
+                fontSize: boxSize * 0.45, // Tamaño proporcional
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
               ),
