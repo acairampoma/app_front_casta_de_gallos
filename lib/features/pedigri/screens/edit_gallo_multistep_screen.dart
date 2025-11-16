@@ -814,58 +814,77 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
       
       print('📊 Datos a actualizar: ${galloData.keys}');
       
-      // Llamar al servicio V2 para actualizar
+      // 🗑️ PASO 1: ELIMINAR FOTOS MARCADAS PRIMERO
+      if (_photosToDelete.isNotEmpty) {
+        _showSnackBar('🗑️ Eliminando ${_photosToDelete.length} foto(s)...', isError: false);
+        debugPrint('🔍 Fotos a eliminar: $_photosToDelete');
+
+        bool allDeleted = true;
+        for (String publicId in _photosToDelete) {
+          try {
+            await _deleteFotoFromBackend(widget.gallo['id'], publicId);
+            debugPrint('✅ Foto eliminada exitosamente: $publicId');
+          } catch (e) {
+            debugPrint('❌ Error eliminando foto $publicId: $e');
+            allDeleted = false;
+          }
+        }
+
+        if (allDeleted) {
+          _showSnackBar('✅ ${_photosToDelete.length} foto(s) eliminada(s)', isError: false);
+        } else {
+          _showSnackBar('⚠️ Algunas fotos no se pudieron eliminar', isError: true);
+        }
+      }
+
+      // 🔥 PASO 2: PREPARAR TODAS LAS FOTOS NUEVAS
+      // Foto principal nueva (si cambió)
+      dynamic fotoPrincipalNueva = _photoChanged ? _selectedImage : null;
+      
+      // Fotos adicionales nuevas (solo las que NO son existing_url)
+      final fotosAdicionalesNuevas = _extraImages.where((item) =>
+        !(item is Map && item['type'] == 'existing_url')).toList();
+
+      debugPrint('📸 Foto principal nueva: ${fotoPrincipalNueva != null ? "SÍ" : "NO"}');
+      debugPrint('📸 Fotos adicionales nuevas: ${fotosAdicionalesNuevas.length}');
+
+      // 🔥 PASO 3: SUBIR TODAS LAS FOTOS EN UNA SOLA LLAMADA
+      if (fotoPrincipalNueva != null || fotosAdicionalesNuevas.isNotEmpty) {
+        _showSnackBar('📸 Subiendo fotos...', isError: false);
+
+        // Preparar array: [foto_principal, foto_adicional_1, foto_adicional_2, foto_adicional_3]
+        final List<dynamic> todasLasFotos = [];
+        
+        if (fotoPrincipalNueva != null) {
+          todasLasFotos.add(fotoPrincipalNueva); // foto_1
+        }
+        
+        todasLasFotos.addAll(fotosAdicionalesNuevas); // foto_2, foto_3, foto_4
+
+        debugPrint('📦 Total fotos a subir: ${todasLasFotos.length}');
+
+        final fotosResponse = await GalloServiceV2.uploadMultipleFotos(
+          galloId: widget.gallo['id'],
+          fotos: todasLasFotos,
+        );
+
+        if (fotosResponse['success'] == true) {
+          _showSnackBar('✅ Fotos actualizadas correctamente', isError: false);
+        } else {
+          _showSnackBar('⚠️ Error actualizando fotos: ${fotosResponse["message"]}', isError: true);
+        }
+      }
+
+      // 🔥 PASO 4: ACTUALIZAR DATOS DEL GALLO (SIN FOTOS)
       final response = await GalloServiceV2.updateGalloConExpansionEpico(
         galloId: widget.gallo['id'],
         galloData: galloData,
-        foto: _selectedImage,
-        fotosAdicionales: _extraImages.isNotEmpty ? _extraImages : null,
+        foto: null, // NO enviar foto aquí
+        fotosAdicionales: null, // NO enviar fotos adicionales aquí
       );
 
       if (response['success'] == true) {
         print('✅ Actualización exitosa');
-
-        // 🗑️ ELIMINAR FOTOS MARCADAS PARA ELIMINACIÓN
-        if (_photosToDelete.isNotEmpty) {
-          _showSnackBar('🗑️ Eliminando ${_photosToDelete.length} foto(s)...', isError: false);
-          debugPrint('🔍 Fotos a eliminar: $_photosToDelete');
-
-          bool allDeleted = true;
-          for (String publicId in _photosToDelete) {
-            try {
-              await _deleteFotoFromBackend(widget.gallo['id'], publicId);
-              debugPrint('✅ Foto eliminada exitosamente: $publicId');
-            } catch (e) {
-              debugPrint('❌ Error eliminando foto $publicId: $e');
-              allDeleted = false;
-            }
-          }
-
-          if (allDeleted) {
-            _showSnackBar('✅ ${_photosToDelete.length} foto(s) eliminada(s)', isError: false);
-          } else {
-            _showSnackBar('⚠️ Algunas fotos no se pudieron eliminar', isError: true);
-          }
-        }
-
-        // 📸🔥 SUBIR NUEVAS FOTOS ADICIONALES (solo las que no son existentes)
-        final newPhotos = _extraImages.where((item) =>
-          !(item is Map && item['type'] == 'existing_url')).toList();
-
-        if (newPhotos.isNotEmpty) {
-          _showSnackBar('📸 Subiendo ${newPhotos.length} nueva(s) foto(s)...', isError: false);
-
-          final fotosResponse = await GalloServiceV2.uploadMultipleFotos(
-            galloId: widget.gallo['id'],
-            fotos: newPhotos,
-          );
-
-          if (fotosResponse['success'] == true) {
-            _showSnackBar('✅ ${newPhotos.length} foto(s) nueva(s) guardada(s)', isError: false);
-          } else {
-            _showSnackBar('⚠️ Gallo actualizado pero error en nuevas fotos: ${fotosResponse["message"]}', isError: true);
-          }
-        }
 
         // 🔥 LIMPIAR LISTA DE FOTOS A ELIMINAR
         _photosToDelete.clear();
