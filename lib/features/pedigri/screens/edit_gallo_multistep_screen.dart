@@ -1436,125 +1436,259 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
               ),
             ],
           ),
-          child: (_selectedImage != null || _currentPhotoUrl != null)
-              ? Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: _selectedImage != null
-                          ? (kIsWeb 
-                              ? Image.network(
-                                  (_selectedImage as XFile).path,
-                                  fit: BoxFit.cover,
-                                  width: double.infinity,
-                                  height: double.infinity,
-                                  loadingBuilder: (context, child, loadingProgress) {
-                                    if (loadingProgress == null) return child;
-                                    return const Center(
-                                      child: CircularProgressIndicator(color: Colors.red),
-                                    );
-                                  },
-                                )
-                              : Image.file(
-                                  _selectedImage as File,
-                                  fit: BoxFit.cover,
-                                  width: double.infinity,
-                                  height: double.infinity,
-                                ))
-                          : Image.network(
-                              _currentPhotoUrl!,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity,
-                              loadingBuilder: (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return const Center(
-                                  child: CircularProgressIndicator(color: Colors.red),
-                                );
-                              },
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.error_outline, size: 48, color: Colors.grey),
-                                      SizedBox(height: 8),
-                                      Text('Error cargando imagen'),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                    ),
-                    Positioned(
-                      top: 12,
-                      right: 12,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.7),
-                          shape: BoxShape.circle,
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.white, size: 20),
-                          onPressed: _showImagePickerOptions,
-                        ),
-                      ),
-                    ),
-                    if (_photoChanged)
-                      Positioned(
-                        top: 12,
-                        left: 12,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.green,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Text(
-                            'NUEVA',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                )
-              : InkWell(
-                  onTap: _showImagePickerOptions,
-                  borderRadius: BorderRadius.circular(14),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey[50],
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.add_a_photo, size: 48, color: Colors.grey),
-                        SizedBox(height: 12),
-                        Text(
-                          'Toca para agregar foto',
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Opcional',
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
                     ),
                   ),
                 ),
+            ],
+          ),
+        ),
+      );
+    }),
+  ),
+);
+
+// ===== FLOATING ACTION BUTTON =====
+Widget? _buildFloatingActionButton() {
+  if (_loadingMessage != null) {
+    return FloatingActionButton.extended(
+      onPressed: null,
+      backgroundColor: Colors.red[300],
+      icon: const SizedBox(
+        width: 16,
+        height: 16,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: Colors.white,
+        ),
+      ),
+      label: Text(
+        _loadingMessage!,
+        style: const TextStyle(color: Colors.white),
+      ),
+    );
+  }
+  return null;
+}
+
+// ===== FASE 1: 📷 FOTO Y DATOS PRINCIPALES =====
+Widget _buildFase1() {
+  return Form(
+    key: _formKey1,
+    child: SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader('📷 FOTO Y DATOS PRINCIPALES', 'Información básica del gallo'),
+          const SizedBox(height: 20),
+          
+          // GESTIÓN DE FOTO ÉPICA
+          _buildPhotoSection(),
+          const SizedBox(height: 24),
+          
+          // INFORMACIÓN PRINCIPAL
+          _buildEpicTextField(
+            controller: _nombreController,
+            label: 'Nombre del Gallo',
+            icon: AppIcons.galloIconData,
+            isRequired: true,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'El nombre es obligatorio';
+              }
+              if (value.trim().length < 2) {
+                return 'Mínimo 2 caracteres';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+          
+          _buildEpicTextField(
+            controller: _registroController,
+            label: 'Número de Registro',
+            icon: Icons.confirmation_number,
+            hint: 'Código único del gallo',
+          ),
+          const SizedBox(height: 16),
+          
+          _buildDateField(
+            label: 'Fecha de Nacimiento',
+            date: _fechaNacimiento,
+            onTap: () => _selectDate(context, 'gallo'),
+          ),
+          const SizedBox(height: 16),
+          
+          _buildEpicDropdown(
+            label: 'Color de Placa',
+            value: _colorPlaca,
+            items: _coloresPlaca,
+            onChanged: (value) => setState(() => _colorPlaca = value),
+            icon: Icons.palette,
+          ),
+          const SizedBox(height: 16),
+          
+          _buildEpicDropdown(
+            label: 'Ubicación de Placa',
+            value: _ubicacionPlaca,
+            items: _ubicacionesPlaca,
+            onChanged: (value) => setState(() => _ubicacionPlaca = value),
+            icon: Icons.location_on,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+// ===== SECCIÓN DE FOTO ÉPICA =====
+Widget _buildPhotoSection() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        'Foto del Gallo',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: Colors.black87,
+        ),
+      ),
+      const SizedBox(height: 8),
+      Container(
+        width: double.infinity,
+        height: 220,
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey[300]!, width: 2),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 3,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: (_selectedImage != null || _currentPhotoUrl != null)
+            ? Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: _selectedImage != null
+                        ? (kIsWeb 
+                            ? Image.network(
+                                (_selectedImage as XFile).path,
+                                fit: BoxFit.contain,
+                                width: double.infinity,
+                                height: double.infinity,
+                                loadingBuilder: (context, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  return const Center(
+                                    child: CircularProgressIndicator(color: Colors.red),
+                                  );
+                                },
+                              )
+                            : Image.file(
+                                _selectedImage as File,
+                                fit: BoxFit.contain,
+                                width: double.infinity,
+                                height: double.infinity,
+                              ))
+                        : Image.network(
+                            _currentPhotoUrl!,
+                            fit: BoxFit.contain,
+                            width: double.infinity,
+                            height: double.infinity,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return const Center(
+                                child: CircularProgressIndicator(color: Colors.red),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                                    SizedBox(height: 8),
+                                    Text('Error cargando imagen'),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.7),
+                        shape: BoxShape.circle,
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.white, size: 20),
+                        onPressed: _showImagePickerOptions,
+                      ),
+                    ),
+                  ),
+                  if (_photoChanged)
+                    Positioned(
+                      top: 12,
+                      left: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          'NUEVA',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              )
+            : InkWell(
+                onTap: _showImagePickerOptions,
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.add_a_photo, size: 48, color: Colors.grey),
+                      SizedBox(height: 12),
+                      Text(
+                        'Toca para agregar foto',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Opcional',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
         ),
         const SizedBox(height: 12),
         _buildExtraPhotosGrid(),
@@ -2549,7 +2683,7 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
           // Existing photo from database (URL)
           image = Image.network(
             item['url'],
-            fit: BoxFit.cover,
+            fit: BoxFit.contain,
             width: double.infinity,
             height: double.infinity,
             loadingBuilder: (context, child, loadingProgress) {
@@ -2570,10 +2704,10 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
           );
         } else if (kIsWeb && item is XFile) {
           // New photo on web (XFile)
-          image = Image.network(item.path, fit: BoxFit.cover, width: double.infinity, height: double.infinity);
+          image = Image.network(item.path, fit: BoxFit.contain, width: double.infinity, height: double.infinity);
         } else {
           // New photo on mobile (File)
-          image = Image.file(item as File, fit: BoxFit.cover, width: double.infinity, height: double.infinity);
+          image = Image.file(item as File, fit: BoxFit.contain, width: double.infinity, height: double.infinity);
         }
         return GestureDetector(
           onTap: () => _openCarouselViewerEdit(index + _primaryOffsetForCarousel()),
