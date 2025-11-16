@@ -835,9 +835,17 @@ class _AddGalloMultistepScreenState extends State<AddGalloMultistepScreen> with 
                 ),
                 child: Stack(
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: _buildImageForDisplay(_selectedImages[0], BoxFit.cover),
+                    GestureDetector(
+                      onTap: () => _openCarouselViewer(0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          width: double.infinity,
+                          height: double.infinity,
+                          color: Colors.grey[100],
+                          child: _buildImageForDisplay(_selectedImages[0], BoxFit.contain),
+                        ),
+                      ),
                     ),
                     // Badge "Principal"
                     Positioned(
@@ -899,9 +907,17 @@ class _AddGalloMultistepScreenState extends State<AddGalloMultistepScreen> with 
                         // Mostrar foto adicional existente
                         return Stack(
                           children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: _buildImageForDisplay(_selectedImages[photoIndex], BoxFit.cover),
+                            GestureDetector(
+                              onTap: () => _openCarouselViewer(photoIndex),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  color: Colors.grey[100],
+                                  child: _buildImageForDisplay(_selectedImages[photoIndex], BoxFit.contain),
+                                ),
+                              ),
                             ),
                             // Botón eliminar mini
                             Positioned(
@@ -1049,38 +1065,94 @@ class _AddGalloMultistepScreenState extends State<AddGalloMultistepScreen> with 
       context: context,
       barrierDismissible: true,
       builder: (context) {
+        int currentPage = initialIndex;
         final controller = PageController(initialPage: initialIndex);
-        return Dialog(
-          insetPadding: const EdgeInsets.all(12),
-          backgroundColor: Colors.black,
-          child: Stack(
-            children: [
-              PageView.builder(
-                controller: controller,
-                itemCount: _selectedImages.length,
-                itemBuilder: (context, index) {
-                  final item = _selectedImages[index];
-                  if (kIsWeb && item is XFile) {
-                    return InteractiveViewer(
-                      child: Image.network(item.path, fit: BoxFit.contain),
-                    );
-                  } else {
-                    return InteractiveViewer(
-                      child: Image.file(item as File, fit: BoxFit.contain),
-                    );
-                  }
-                },
+        
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              insetPadding: const EdgeInsets.all(12),
+              backgroundColor: Colors.black,
+              child: Stack(
+                children: [
+                  PageView.builder(
+                    controller: controller,
+                    itemCount: _selectedImages.length,
+                    onPageChanged: (index) {
+                      setState(() {
+                        currentPage = index;
+                      });
+                    },
+                    itemBuilder: (context, index) {
+                      final item = _selectedImages[index];
+                      if (kIsWeb && item is XFile) {
+                        return InteractiveViewer(
+                          child: Image.network(item.path, fit: BoxFit.contain),
+                        );
+                      } else {
+                        return InteractiveViewer(
+                          child: Image.file(item as File, fit: BoxFit.contain),
+                        );
+                      }
+                    },
+                  ),
+                  // Contador de fotos
+                  Positioned(
+                    bottom: 20,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${currentPage + 1} / ${_selectedImages.length}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Botón cerrar
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                  // Badge de foto principal
+                  if (currentPage == 0)
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          '⭐ Principal',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
