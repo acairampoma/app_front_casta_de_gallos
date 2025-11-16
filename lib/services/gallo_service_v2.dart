@@ -350,41 +350,21 @@ class GalloServiceV2 {
         // WEB - XFile (blob URL)
         final bytes = await foto.readAsBytes();
         
-        // MÚLTIPLES INTENTOS DE CAMPOS PARA WEB
+        // Campo correcto para el backend
         request.files.add(http.MultipartFile.fromBytes(
-          'foto_principal', // Campo principal
+          'file', // Campo que espera el backend
           bytes, 
-          filename: foto.name ?? 'gallo_web.jpg',
-        ));
-        
-        // TAMBIÉN INTENTAR CON OTROS NOMBRES DE CAMPO
-        request.files.add(http.MultipartFile.fromBytes(
-          'file', // Campo alternativo 1
-          bytes, 
-          filename: foto.name ?? 'gallo_web.jpg',
-        ));
-        
-        request.files.add(http.MultipartFile.fromBytes(
-          'foto', // Campo alternativo 2
-          bytes, 
-          filename: foto.name ?? 'gallo_web.jpg',
-        ));
-        
-        request.files.add(http.MultipartFile.fromBytes(
-          'image', // Campo alternativo 3
-          bytes, 
-          filename: foto.name ?? 'gallo_web.jpg',
+          filename: foto.name ?? 'gallo.jpg',
         ));
         
         print('📸 Foto WEB agregada: ${foto.name} (${bytes.length} bytes)');
-        print('📸 Intentando múltiples campos: foto_principal, file, foto, image');
         
       } else if (foto is File) {
         // MÓVIL - File path
         request.files.add(await http.MultipartFile.fromPath(
-          'foto_principal', // Campo exacto del backend
+          'file', // Campo que espera el backend
           foto.path,
-          filename: 'gallo_mobile.jpg'
+          filename: 'gallo.jpg'
         ));
         print('📸 Foto MÓVIL agregada: ${foto.path}');
       }
