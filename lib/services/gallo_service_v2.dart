@@ -236,6 +236,7 @@ class GalloServiceV2 {
   static Future<Map<String, dynamic>> uploadMultipleFotos({
     required int galloId,
     required List<dynamic> fotos, // Máximo 4 fotos: File o XFile
+    bool tieneFotoPrincipal = false, // ✅ NUEVO: Indica si la primera foto es la principal
   }) async {
     try {
       // 🚫 VALIDAR LÍMITE ESTRICTO DE 4 FOTOS
@@ -244,6 +245,7 @@ class GalloServiceV2 {
       }
 
       print('📸 Enviando ${fotos.length} fotos para gallo ID: $galloId');
+      print('📸 Tiene foto principal: $tieneFotoPrincipal');
 
       // 1. Crear MultipartRequest al endpoint correcto
       final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/api/v1/gallos/$galloId/fotos-multiples'));
@@ -255,10 +257,19 @@ class GalloServiceV2 {
         print('🔑 Token JWT agregado');
       }
 
-      // 3. Agregar fotos con nombres correctos: foto_1, foto_2, foto_3, foto_4
+      // 3. Agregar fotos con nombres correctos
       for (int i = 0; i < fotos.length && i < 4; i++) {
         final foto = fotos[i];
-        final fieldName = 'foto_${i + 1}'; // foto_1, foto_2, foto_3, foto_4
+        
+        // 🔥 LÓGICA MEJORADA: Determinar el nombre del campo
+        String fieldName;
+        if (tieneFotoPrincipal) {
+          // Si tiene foto principal, la primera es foto_1, las demás foto_2, foto_3, foto_4
+          fieldName = 'foto_${i + 1}';
+        } else {
+          // Si NO tiene foto principal, todas son adicionales: foto_2, foto_3, foto_4
+          fieldName = 'foto_${i + 2}'; // Empieza desde foto_2
+        }
 
         try {
           if (kIsWeb && foto is XFile) {
@@ -266,18 +277,18 @@ class GalloServiceV2 {
             request.files.add(http.MultipartFile.fromBytes(
               fieldName,
               bytes,
-              filename: foto.name.isNotEmpty ? foto.name : 'foto_${i + 1}.jpg',
+              filename: foto.name.isNotEmpty ? foto.name : '$fieldName.jpg',
             ));
           } else if (foto is File) {
             request.files.add(await http.MultipartFile.fromPath(
               fieldName,
               foto.path,
-              filename: 'foto_${i + 1}.jpg',
+              filename: '$fieldName.jpg',
             ));
           }
-          print('✅ Foto ${i + 1} agregada como $fieldName');
+          print('✅ Foto agregada como $fieldName');
         } catch (e) {
-          print('❌ Error agregando foto ${i + 1}: $e');
+          print('❌ Error agregando foto $fieldName: $e');
           continue;
         }
       }

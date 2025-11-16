@@ -854,18 +854,22 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
 
         // Preparar array: [foto_principal, foto_adicional_1, foto_adicional_2, foto_adicional_3]
         final List<dynamic> todasLasFotos = [];
+        bool tienePrincipal = false;
         
         if (fotoPrincipalNueva != null) {
           todasLasFotos.add(fotoPrincipalNueva); // foto_1
+          tienePrincipal = true;
         }
         
-        todasLasFotos.addAll(fotosAdicionalesNuevas); // foto_2, foto_3, foto_4
+        todasLasFotos.addAll(fotosAdicionalesNuevas); // foto_2, foto_3, foto_4 (o foto_2, foto_3, foto_4 si no hay principal)
 
         debugPrint('📦 Total fotos a subir: ${todasLasFotos.length}');
+        debugPrint('📸 Tiene foto principal nueva: $tienePrincipal');
 
         final fotosResponse = await GalloServiceV2.uploadMultipleFotos(
           galloId: widget.gallo['id'],
           fotos: todasLasFotos,
+          tieneFotoPrincipal: tienePrincipal, // ✅ CRUCIAL: Indica si la primera es principal
         );
 
         if (fotosResponse['success'] == true) {
