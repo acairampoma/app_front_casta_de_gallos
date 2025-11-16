@@ -757,16 +757,34 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
         maxHeight: 1920,
       );
       if (images.isEmpty) return;
+      
+      // 🔥 CONTAR SOLO FOTOS NUEVAS (no las existing_url)
+      int fotosNuevasActuales = _extraImages.where((item) => 
+        !(item is Map && item['type'] == 'existing_url')).length;
+      
+      int fotosAgregadas = 0;
       for (final img in images) {
-        if (_extraImages.length >= 4) break;
+        // 🔥 LÍMITE: Máximo 3 fotos adicionales NUEVAS (foto_2, foto_3, foto_4)
+        if (fotosNuevasActuales + fotosAgregadas >= 3) {
+          debugPrint('⚠️ Límite alcanzado: 3 fotos adicionales nuevas');
+          break;
+        }
+        
         if (kIsWeb) {
           _extraImages.add(img);
         } else {
           _extraImages.add(File(img.path));
         }
+        fotosAgregadas++;
       }
+      
       setState(() {});
-      _showSnackBar('Se agregaron ${_extraImages.length} fotos adicionales', isError: false);
+      
+      if (fotosAgregadas > 0) {
+        _showSnackBar('✅ ${fotosAgregadas} foto(s) adicional(es) agregada(s)', isError: false);
+      } else {
+        _showSnackBar('⚠️ Ya tienes 3 fotos adicionales nuevas. Elimina alguna primero.', isError: true);
+      }
     } catch (e) {
       _showSnackBar('Error seleccionando adicionales: $e', isError: true);
     }
