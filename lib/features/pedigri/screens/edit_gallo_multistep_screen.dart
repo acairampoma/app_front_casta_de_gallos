@@ -877,6 +877,9 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
           'gallo_actualizado': {
             'id': widget.gallo['id'],
             'nombre': _nombreController.text.trim(),
+            'foto_principal_url': response['data']?['gallo_principal']?['foto_principal_url'] ?? 
+                                  response['data']?['gallo_principal']?['url_foto_cloudinary'] ??
+                                  widget.gallo['foto_principal_url'], // Fallback a la foto anterior
           },
           'expansion_genealogica': _crearPadre || _crearMadre,
           'registros_nuevos_creados': 0, // Se actualizará si hay expansión
