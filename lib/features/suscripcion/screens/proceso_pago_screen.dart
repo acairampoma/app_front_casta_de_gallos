@@ -47,6 +47,9 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
   String? _error;
   PagoPendiente? _estadoPago;
 
+  // 💳 NUEVOS: Campos para Mercado Pago
+  final TextEditingController _numeroYapeController = TextEditingController();
+  final TextEditingController _codigoConfirmacionController = TextEditingController();
   final TextEditingController _referenciaController = TextEditingController();
   final ImagePicker _imagePicker = ImagePicker();
 
@@ -530,11 +533,6 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
               ],
             ),
           ],
-        ],
-      ),
-    );
-  }
-
   Widget _buildPasoComprobante() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -553,28 +551,61 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    '📸 Paso 2: Comprobante (OBLIGATORIO)',
+                    '💳 Paso 2: Datos del Pago',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.red,
                     ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Debes subir una foto del comprobante de Yape para continuar',
+                    'Ingresa los datos de tu pago con Yape',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.red.shade600,
-                      fontWeight: FontWeight.w500,
+                      color: Colors.grey.shade600,
                     ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
-                  _buildComprobanteSelector(),
+                  
+                  // 📱 Número de Yape
+                  _buildNumeroYapeInput(),
                   const SizedBox(height: 20),
+                  
+                  // 🔢 Código de Confirmación
+                  _buildCodigoConfirmacionInput(),
+                  const SizedBox(height: 20),
+                  
+                  // 📝 Referencia (opcional)
                   _buildReferenciaInput(),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // ℹ️ Info adicional
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'El código de confirmación aparece después de realizar el pago en Yape',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.blue.shade900,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -675,6 +706,101 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
     );
   }
 
+  // 📱 Número de Yape del usuario
+  Widget _buildNumeroYapeInput() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            Text(
+              'Número de Yape',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(width: 4),
+            Text(
+              '*',
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _numeroYapeController,
+          decoration: InputDecoration(
+            hintText: 'Ej: 999 888 777',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            prefixIcon: const Icon(Icons.phone_android, color: Colors.purple),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+          ),
+          keyboardType: TextInputType.phone,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(9),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // 🔢 Código de Confirmación de Yape
+  Widget _buildCodigoConfirmacionInput() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            Text(
+              'Código de Confirmación',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(width: 4),
+            Text(
+              '*',
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _codigoConfirmacionController,
+          decoration: InputDecoration(
+            hintText: 'Ej: ABC123XYZ',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            prefixIcon: const Icon(Icons.verified, color: Colors.green),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+          ),
+          keyboardType: TextInputType.text,
+          textCapitalization: TextCapitalization.characters,
+          inputFormatters: [
+            LengthLimitingTextInputFormatter(20),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // 📝 Referencia opcional
   Widget _buildReferenciaInput() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -692,9 +818,11 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
           decoration: InputDecoration(
             hintText: 'Ej: 123456789',
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
             ),
-            prefixIcon: const Icon(Icons.receipt),
+            prefixIcon: const Icon(Icons.receipt, color: Colors.grey),
+            filled: true,
+            fillColor: Colors.grey.shade50,
           ),
           keyboardType: TextInputType.number,
           inputFormatters: [
@@ -757,6 +885,9 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
   }
 
   Widget _buildResumenConfirmacion() {
+    final numeroCompleto = _numeroYapeController.text.isNotEmpty;
+    final codigoCompleto = _codigoConfirmacionController.text.isNotEmpty;
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -768,16 +899,20 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
         children: [
           _buildResumenRow('Plan:', widget.plan.nombre),
           _buildResumenRow('Monto:', 'S/. ${widget.plan.precio.toStringAsFixed(2)}'),
+          _buildResumenRow(
+            'Número Yape:',
+            numeroCompleto 
+              ? _numeroYapeController.text
+              : '❌ REQUERIDO'
+          ),
+          _buildResumenRow(
+            'Código:',
+            codigoCompleto 
+              ? _codigoConfirmacionController.text
+              : '❌ REQUERIDO'
+          ),
           if (_referenciaController.text.isNotEmpty)
             _buildResumenRow('Referencia:', _referenciaController.text),
-          _buildResumenRow(
-            'Comprobante:',
-            _comprobanteSubido
-              ? '✅ Subido Exitosamente'
-              : _comprobanteImagen != null
-                ? '⏳ Listo para Subir'
-                : '❌ REQUERIDO'
-          ),
         ],
       ),
     );
@@ -1044,15 +1179,18 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
     }
   }
 
-  /// 🚀 FLUJO ROBUSTO: Solo confirmar pago (imagen ya subida en paso 2)
+  /// Confirmar pago con datos de texto (número y código)
   Future<void> _confirmarPago() async {
     if (_qrResponse == null) return;
 
-    // ✅ VALIDACIÓN: El comprobante debe estar subido
-    if (!_comprobanteSubido || _comprobanteUrl == null) {
+    // VALIDACIÓN: Número y código obligatorios
+    final numeroYape = _numeroYapeController.text.trim();
+    final codigoConfirmacion = _codigoConfirmacionController.text.trim();
+    
+    if (numeroYape.length != 9 || codigoConfirmacion.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('❌ El comprobante debe estar subido antes de confirmar'),
+          content: Text(' Debes completar el número de Yape y el código de confirmación'),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 3),
         ),
@@ -1063,19 +1201,18 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
     try {
       setState(() => _isConfirmandoPago = true);
 
-      print('🚀 [ProcesoPago] === CONFIRMANDO PAGO (COMPROBANTE YA SUBIDO) ===');
-      print('📸 [ProcesoPago] URL del comprobante: $_comprobanteUrl');
+      print(' [ProcesoPago] === CONFIRMANDO PAGO CON DATOS ===');
+      print(' [ProcesoPago] Número Yape: $numeroYape');
+      print(' [ProcesoPago] Código: $codigoConfirmacion');
 
-      // Solo confirmar el pago - la imagen ya está subida
+      // Confirmar el pago con los datos de texto
       await PagoService.confirmarPago(
         pagoId: _qrResponse!.pagoId,
-        referenciaYape: _referenciaController.text.trim().isEmpty
-            ? null
-            : _referenciaController.text.trim(),
-        comprobanteImagen: null, // No necesario, ya subido en paso 2
+        referenciaYape: codigoConfirmacion, // Código de confirmación como referencia
+        comprobanteImagen: null, // Ya no se usa imagen
       );
 
-      print('✅ [ProcesoPago] Pago confirmado exitosamente');
+      print(' [ProcesoPago] Pago confirmado exitosamente');
 
       HapticFeedback.mediumImpact();
 
@@ -1246,35 +1383,36 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
     
     switch (_tabController.index) {
       case 0:
+        // Paso 1: Siempre permitir continuar
         return () async {
-          // Vibración y feedback
           HapticFeedback.lightImpact();
           setState(() => _isConfirmandoPago = true);
-          
-          // Pequeña animación de carga
           await Future.delayed(const Duration(milliseconds: 300));
-          
-          // Cambiar de tab
           _tabController.animateTo(1);
-          
           setState(() => _isConfirmandoPago = false);
         };
+        
       case 1:
-        // ✅ FLUJO ROBUSTO: Subir imagen PRIMERO en paso 2
-        return _comprobanteImagen != null && !_comprobanteSubido && !_isSubiendoComprobante
-          ? _subirComprobanteYContinuar
-          : _comprobanteSubido
-            ? () async {
-                // Si ya está subido, solo continuar
-                HapticFeedback.lightImpact();
-                _tabController.animateTo(2);
-              }
-            : null; // Deshabilitar si no hay imagen o está subiendo
+        // Paso 2: Validar que tenga número y código
+        final tieneNumero = _numeroYapeController.text.trim().length == 9;
+        final tieneCodigo = _codigoConfirmacionController.text.trim().isNotEmpty;
+        
+        return tieneNumero && tieneCodigo
+          ? () async {
+              HapticFeedback.lightImpact();
+              _tabController.animateTo(2);
+            }
+          : null; // Deshabilitar si faltan datos
+          
       case 2:
-        // Solo permitir confirmar si el comprobante está subido
-        return _comprobanteSubido && _comprobanteUrl != null && !_isSubiendoComprobante
+        // Paso 3: Permitir confirmar si tiene los datos obligatorios
+        final tieneNumero = _numeroYapeController.text.trim().length == 9;
+        final tieneCodigo = _codigoConfirmacionController.text.trim().isNotEmpty;
+        
+        return tieneNumero && tieneCodigo
           ? _confirmarPago
           : null;
+          
       default:
         return null;
     }
@@ -1284,9 +1422,9 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
     if (_isConfirmandoPago) {
       switch (_tabController.index) {
         case 0:
-          return 'Cargando paso 2...';
+          return 'Cargando...';
         case 1:
-          return 'Cargando confirmación...';
+          return 'Cargando...';
         case 2:
           return 'Procesando pago...';
         default:
@@ -1298,11 +1436,14 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
       case 0:
         return 'Ya Pagué - Continuar';
       case 1:
-        if (_isSubiendoComprobante) return 'Subiendo Comprobante...';
-        if (_comprobanteSubido) return 'Continuar al Paso 3';
-        return _comprobanteImagen != null ? 'Subir Comprobante' : 'Selecciona Comprobante Primero';
+        final tieneNumero = _numeroYapeController.text.trim().length == 9;
+        final tieneCodigo = _codigoConfirmacionController.text.trim().isNotEmpty;
+        
+        if (!tieneNumero || !tieneCodigo) {
+          return 'Completa los datos requeridos';
+        }
+        return 'Continuar a Confirmación';
       case 2:
-        if (!_comprobanteSubido) return 'Debes Subir Comprobante Primero';
         return 'Confirmar Pago';
       default:
         return 'Siguiente';
