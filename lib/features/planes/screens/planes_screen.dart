@@ -12,6 +12,7 @@ import '../../../services/pago_service.dart';
 import '../widgets/plan_card.dart';
 import '../widgets/limite_progress_widget.dart';
 import '../../suscripcion/screens/proceso_pago_screen.dart';
+import '../../suscripcion/screens/seleccion_metodo_pago_screen.dart';
 import '../../../config/adaptive_ui_config.dart'; // 🎨 SISTEMA ADAPTATIVO PARA DISPOSITIVOS CHINOS
 
 class PlanesScreen extends StatefulWidget {
@@ -1805,11 +1806,11 @@ class _PlanesScreenState extends State<PlanesScreen>
       // Cerrar loading
       if (mounted) Navigator.of(context).pop();
 
-      // Navegar a proceso de pago
+      // Navegar a selección de método de pago
       if (mounted) {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => ProcesoPagoScreen(
+            builder: (context) => SeleccionMetodoPagoScreen(
               plan: plan,
               upgradeResponse: upgradeResponse,
             ),
