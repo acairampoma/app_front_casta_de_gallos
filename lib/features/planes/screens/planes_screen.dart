@@ -134,14 +134,34 @@ class _PlanesScreenState extends State<PlanesScreen>
       
       // 🔄 COMBINAR CON PAGOS PENDIENTES DE LA API EXISTENTE
       // SOLO si la suscripción NO está activa
-      try {
-        print('💳 Verificando pagos pendientes...');
-        print('💳 Suscripción actual status: ${_suscripcionActual?.status}');
-        
-        // ✅ SI LA SUSCRIPCIÓN YA ESTÁ ACTIVA, NO MOSTRAR PAGOS PENDIENTES
-        if (_suscripcionActual?.status?.toLowerCase() == 'active') {
-          print('✅ Suscripción ya está ACTIVA - ignorando pagos pendientes antiguos');
-        } else {
+      if (_suscripcionActual?.status?.toLowerCase() == 'active') {
+        print('✅ Suscripción ya está ACTIVA - FORZANDO pagoPendiente a null');
+        // FORZAR pagoPendiente a null si está activa
+        _suscripcionActual = Suscripcion(
+          id: _suscripcionActual!.id,
+          userId: _suscripcionActual!.userId,
+          planType: _suscripcionActual!.planType,
+          planName: _suscripcionActual!.planName,
+          precio: _suscripcionActual!.precio,
+          status: _suscripcionActual!.status,
+          fechaInicio: _suscripcionActual!.fechaInicio,
+          fechaFin: _suscripcionActual!.fechaFin,
+          gallosMaximo: _suscripcionActual!.gallosMaximo,
+          topesPorGallo: _suscripcionActual!.topesPorGallo,
+          peleasPorGallo: _suscripcionActual!.peleasPorGallo,
+          vacunasPorGallo: _suscripcionActual!.vacunasPorGallo,
+          createdAt: _suscripcionActual!.createdAt,
+          updatedAt: _suscripcionActual!.updatedAt,
+          diasRestantes: _suscripcionActual!.diasRestantes,
+          estaActiva: _suscripcionActual!.estaActiva,
+          esPremium: _suscripcionActual!.esPremium,
+          pagoPendiente: null, // ✅ FORZAR A NULL
+        );
+      } else {
+        try {
+          print('💳 Verificando pagos pendientes...');
+          print('💳 Suscripción actual status: ${_suscripcionActual?.status}');
+          
           // Solo buscar pagos pendientes si la suscripción NO está activa
           final misPagos = await PagoService.obtenerMisPagos();
           
@@ -237,9 +257,29 @@ class _PlanesScreenState extends State<PlanesScreen>
       
       // Verificar pagos pendientes solo si NO está activa
       if (suscripcion?.status?.toLowerCase() == 'active') {
-        print('✅ Suscripción ACTIVA - sin pagos pendientes');
+        print('✅ Suscripción ACTIVA - FORZANDO pagoPendiente a null');
+        // FORZAR pagoPendiente a null si está activa
         setState(() {
-          _suscripcionActual = suscripcion;
+          _suscripcionActual = Suscripcion(
+            id: suscripcion!.id,
+            userId: suscripcion.userId,
+            planType: suscripcion.planType,
+            planName: suscripcion.planName,
+            precio: suscripcion.precio,
+            status: suscripcion.status,
+            fechaInicio: suscripcion.fechaInicio,
+            fechaFin: suscripcion.fechaFin,
+            gallosMaximo: suscripcion.gallosMaximo,
+            topesPorGallo: suscripcion.topesPorGallo,
+            peleasPorGallo: suscripcion.peleasPorGallo,
+            vacunasPorGallo: suscripcion.vacunasPorGallo,
+            createdAt: suscripcion.createdAt,
+            updatedAt: suscripcion.updatedAt,
+            diasRestantes: suscripcion.diasRestantes,
+            estaActiva: suscripcion.estaActiva,
+            esPremium: suscripcion.esPremium,
+            pagoPendiente: null, // ✅ FORZAR A NULL
+          );
           _suscripcionLoaded = true;
         });
       } else {
