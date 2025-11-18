@@ -87,22 +87,11 @@ class _SeleccionMetodoPagoScreenState extends State<SeleccionMetodoPagoScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // YAPE
+                    // YAPE / TARJETA - UNIFICADO
                     _buildMetodoPagoCard(
                       metodo: 'yape',
-                      titulo: 'Yape',
-                      subtitulo: 'Pago rápido con Yape',
-                      icono: '💜',
-                      color: Colors.purple,
-                      descripcion: 'Escanea el QR, ingresa tu número y código de confirmación',
-                    ),
-                    const SizedBox(height: 16),
-
-                    // MERCADO PAGO
-                    _buildMetodoPagoCard(
-                      metodo: 'mercadopago',
-                      titulo: 'Tarjeta de Crédito/Débito',
-                      subtitulo: 'Visa, Mastercard, American Express',
+                      titulo: 'Yape / Tarjeta de Crédito',
+                      subtitulo: 'Visa, Mastercard, American Express, Yape',
                       icono: '💳',
                       color: Colors.blue,
                       descripcion: 'Pago seguro con Mercado Pago',
