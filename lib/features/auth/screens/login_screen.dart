@@ -1145,7 +1145,7 @@ class _LoginScreenState extends State<LoginScreen>
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             Text(
-              'Únete a Casta de Reyes',
+              'Únete a Casta de Gallos',
               style: TextStyle(
                 fontSize: 12, 
                 color: Colors.white.withOpacity(0.9),
