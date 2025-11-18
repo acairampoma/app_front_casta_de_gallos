@@ -10,6 +10,7 @@ import '../../../shared/theme/app_colors.dart';
 import '../../../models/suscripcion_models.dart';
 import '../../../models/pago_models.dart';
 import '../../../services/pago_service.dart';
+import '../../../services/mercadopago_service.dart';
 import '../../../services/firebase_notification_service.dart';
 import '../../../services/auth_service.dart';
 import '../../planes/screens/planes_screen.dart';
@@ -352,36 +353,106 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
         children: [
           _buildStepIndicator(0),
           const SizedBox(height: 24),
+          
+          // 💰 MONTO A PAGAR - LO MÁS IMPORTANTE
           Card(
             elevation: 8,
+            color: Colors.green.shade50,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
+              side: BorderSide(color: Colors.green.shade300, width: 2),
             ),
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
                   const Text(
-                    '📱 Paso 1: Escanea con Yape',
+                    '💰 Monto a Pagar',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'S/. ${widget.plan.precio.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 48,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                  ),
+                  Text(
+                    'Plan ${widget.plan.nombre}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // 📱 INSTRUCCIONES YAPE
+          Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  const Text(
+                    '📱 Paso 1: Realiza el Yapeo',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Abre tu app Yape y escanea este código QR',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey.shade600,
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.purple.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.purple.shade200),
                     ),
-                    textAlign: TextAlign.center,
+                    child: Column(
+                      children: [
+                        const Text(
+                          'Yapea al número:',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          '993-592-328',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.purple,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Por el monto de S/. ${widget.plan.precio.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 20),
-                  _buildYapeGuideImage(), // ✅ TU QR YAPE PRINCIPAL
-                  const SizedBox(height: 20),
-                  _buildQRInfo(),
                 ],
               ),
             ),
@@ -533,6 +604,11 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
               ],
             ),
           ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildPasoComprobante() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -1179,18 +1255,27 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
     }
   }
 
-  /// Confirmar pago con datos de texto (número y código)
+  /// Confirmar pago con Yape usando Mercado Pago API
   Future<void> _confirmarPago() async {
-    if (_qrResponse == null) return;
-
-    // VALIDACIÓN: Número y código obligatorios
+    // VALIDACIÓN: Número y código OTP obligatorios
     final numeroYape = _numeroYapeController.text.trim();
-    final codigoConfirmacion = _codigoConfirmacionController.text.trim();
+    final otp = _codigoConfirmacionController.text.trim();
     
-    if (numeroYape.length != 9 || codigoConfirmacion.isEmpty) {
+    if (numeroYape.length != 9) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(' Debes completar el número de Yape y el código de confirmación'),
+          content: Text(' El número de Yape debe tener 9 dígitos'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    if (otp.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(' Debes ingresar el código OTP de Yape'),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 3),
         ),
@@ -1201,22 +1286,25 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
     try {
       setState(() => _isConfirmandoPago = true);
 
-      print(' [ProcesoPago] === CONFIRMANDO PAGO CON DATOS ===');
+      print(' [ProcesoPago] === PROCESANDO PAGO CON YAPE (MERCADO PAGO) ===');
       print(' [ProcesoPago] Número Yape: $numeroYape');
-      print(' [ProcesoPago] Código: $codigoConfirmacion');
+      print(' [ProcesoPago] OTP: ${otp.substring(0, 3)}***');
+      print(' [ProcesoPago] Plan: ${widget.plan.codigo}');
+      print(' [ProcesoPago] Monto: S/. ${widget.plan.precio}');
 
-      // Confirmar el pago con los datos de texto
-      await PagoService.confirmarPago(
-        pagoId: _qrResponse!.pagoId,
-        referenciaYape: codigoConfirmacion, // Código de confirmación como referencia
-        comprobanteImagen: null, // Ya no se usa imagen
+      // Llamar a Mercado Pago API para procesar pago con Yape
+      final resultado = await MercadoPagoService.pagarConYape(
+        numeroTelefono: numeroYape,
+        otp: otp,
+        planCodigo: widget.plan.codigo,
+        monto: widget.plan.precio,
       );
 
-      print(' [ProcesoPago] Pago confirmado exitosamente');
+      print(' [ProcesoPago] Respuesta de Mercado Pago: $resultado');
 
       HapticFeedback.mediumImpact();
 
-      // 🔔 ENVIAR NOTIFICACIÓN PUSH AL ADMIN
+      // ENVIAR NOTIFICACIÓN PUSH AL ADMIN
       try {
         final currentUser = AuthService.instance.currentUser;
         final currentProfile = AuthService.instance.currentProfile;
@@ -1228,21 +1316,25 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
             planElegido: widget.plan.nombre,
             monto: widget.plan.precio,
           );
-          print('✅ Notificación enviada al admin');
+          print(' Notificación enviada al admin');
         }
       } catch (e) {
-        print('⚠️ Error enviando notificación al admin: $e');
+        print(' Error enviando notificación al admin: $e');
         // No falla el proceso si la notificación falla
       }
       
-      // 🚀 REDIRECCIÓN DIRECTA A MI SUSCRIPCIÓN
+      // REDIRECCIÓN DIRECTA A MI SUSCRIPCIÓN
       if (mounted) {
-        // Mostrar mensaje ANTES de navegar
+        final estado = resultado['status'] ?? 'unknown';
+        final mensaje = estado == 'approved' 
+          ? ' ¡Pago Aprobado! Tu suscripción está activa'
+          : ' Pago en proceso. Te notificaremos cuando se apruebe';
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Pago registrado exitosamente. Estado: PENDIENTE DE APROBACIÓN'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 5),
+          SnackBar(
+            content: Text(mensaje),
+            backgroundColor: estado == 'approved' ? Colors.green : Colors.orange,
+            duration: const Duration(seconds: 5),
           ),
         );
         
