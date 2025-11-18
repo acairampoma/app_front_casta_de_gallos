@@ -44,7 +44,7 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
   XFile? _comprobanteImagen;
   StreamSubscription<PagoPendiente>? _pollingSubscription;
 
-  bool _isLoadingQR = true;
+  bool _isLoadingQR = false;  // No cargar QR automáticamente
   bool _isConfirmandoPago = false;
   bool _isSubiendoComprobante = false;
   bool _comprobanteSubido = false;
@@ -63,7 +63,7 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
     super.initState();
     _setupControllers();
     _setupAnimations();
-    _generarQR();
+    // NO generar QR automáticamente - solo cuando se use Mercado Pago
   }
 
   void _setupControllers() {
@@ -401,7 +401,7 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
           
           const SizedBox(height: 20),
           
-          // 📱 INSTRUCCIONES YAPE
+          // 💳 INSTRUCCIONES MERCADO PAGO
           Card(
             elevation: 4,
             shape: RoundedRectangleBorder(
@@ -411,47 +411,48 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
+                  const Icon(
+                    Icons.payment,
+                    size: 64,
+                    color: AppColors.primary,
+                  ),
+                  const SizedBox(height: 16),
                   const Text(
-                    '📱 Paso 1: Realiza el Yapeo',
+                    '💳 Pago Seguro con Mercado Pago',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,
                   ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Al hacer clic en el botón de abajo, serás redirigido a Mercado Pago para completar tu pago de forma segura.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade700,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: 16),
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.purple.shade50,
+                      color: Colors.blue.shade50,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.purple.shade200),
+                      border: Border.all(color: Colors.blue.shade200),
                     ),
-                    child: Column(
+                    child: const Row(
                       children: [
-                        const Text(
-                          'Yapea al número:',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          '993-592-328',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.purple,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Por el monto de S/. ${widget.plan.precio.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.green,
+                        Icon(Icons.info_outline, color: Colors.blue, size: 20),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Puedes pagar con Yape, tarjeta de débito o crédito',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.blue,
+                            ),
                           ),
                         ),
                       ],
