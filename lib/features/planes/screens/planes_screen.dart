@@ -92,6 +92,12 @@ class _PlanesScreenState extends State<PlanesScreen>
       _error = null;
     });
 
+    // Si viene de un pago, esperar un poco más para que el webhook procese
+    if (widget.abrirMiSuscripcion) {
+      print('⏳ Esperando 2 segundos adicionales para que el webhook procese...');
+      await Future.delayed(const Duration(seconds: 2));
+    }
+
     // 1. CARGAR PLANES (CRÍTICO)
     try {
       print('🔍 Cargando planes disponibles desde API...');
@@ -118,54 +124,63 @@ class _PlanesScreenState extends State<PlanesScreen>
       _suscripcionActual = await SuscripcionService.obtenerSuscripcionActual();
       
       // 🔄 COMBINAR CON PAGOS PENDIENTES DE LA API EXISTENTE
+      // SOLO si la suscripción NO está activa
       try {
         print('💳 Verificando pagos pendientes...');
-        final misPagos = await PagoService.obtenerMisPagos();
+        print('💳 Suscripción actual status: ${_suscripcionActual?.status}');
         
-        // Buscar pago pendiente o verificando
-        final pagosPendientes = misPagos.where((pago) => 
-          pago.estado.toLowerCase() == 'pendiente' || 
-          pago.estado.toLowerCase() == 'verificando'
-        ).toList();
-        
-        final pagoPendiente = pagosPendientes.isNotEmpty ? pagosPendientes.first : null;
-        
-        if (pagoPendiente != null) {
-          print('🔥 PAGO PENDIENTE ENCONTRADO: ${pagoPendiente.planCodigo} - ${pagoPendiente.estado}');
-          
-          // Convertir PagoPendiente a PagoPendienteInfo
-          final pagoPendienteInfo = PagoPendienteInfo(
-            id: pagoPendiente.id,
-            planCodigo: pagoPendiente.planCodigo,
-            monto: pagoPendiente.monto,
-            estado: pagoPendiente.estado,
-            fechaPago: pagoPendiente.fechaPagoUsuario,
-            createdAt: pagoPendiente.createdAt,
-          );
-          
-          // Crear nueva suscripción con pago pendiente
-          _suscripcionActual = Suscripcion(
-            id: _suscripcionActual!.id,
-            userId: _suscripcionActual!.userId,
-            planType: _suscripcionActual!.planType,
-            planName: _suscripcionActual!.planName,
-            precio: _suscripcionActual!.precio,
-            status: _suscripcionActual!.status,
-            fechaInicio: _suscripcionActual!.fechaInicio,
-            fechaFin: _suscripcionActual!.fechaFin,
-            gallosMaximo: _suscripcionActual!.gallosMaximo,
-            topesPorGallo: _suscripcionActual!.topesPorGallo,
-            peleasPorGallo: _suscripcionActual!.peleasPorGallo,
-            vacunasPorGallo: _suscripcionActual!.vacunasPorGallo,
-            createdAt: _suscripcionActual!.createdAt,
-            updatedAt: _suscripcionActual!.updatedAt,
-            diasRestantes: _suscripcionActual!.diasRestantes,
-            estaActiva: _suscripcionActual!.estaActiva,
-            esPremium: _suscripcionActual!.esPremium,
-            pagoPendiente: pagoPendienteInfo, // 🔄 PAGO DE LA API REAL
-          );
+        // ✅ SI LA SUSCRIPCIÓN YA ESTÁ ACTIVA, NO MOSTRAR PAGOS PENDIENTES
+        if (_suscripcionActual?.status?.toLowerCase() == 'active') {
+          print('✅ Suscripción ya está ACTIVA - ignorando pagos pendientes antiguos');
         } else {
-          print('✅ No hay pagos pendientes');
+          // Solo buscar pagos pendientes si la suscripción NO está activa
+          final misPagos = await PagoService.obtenerMisPagos();
+          
+          // Buscar pago pendiente o verificando
+          final pagosPendientes = misPagos.where((pago) => 
+            pago.estado.toLowerCase() == 'pendiente' || 
+            pago.estado.toLowerCase() == 'verificando'
+          ).toList();
+          
+          final pagoPendiente = pagosPendientes.isNotEmpty ? pagosPendientes.first : null;
+          
+          if (pagoPendiente != null) {
+            print('🔥 PAGO PENDIENTE ENCONTRADO: ${pagoPendiente.planCodigo} - ${pagoPendiente.estado}');
+            
+            // Convertir PagoPendiente a PagoPendienteInfo
+            final pagoPendienteInfo = PagoPendienteInfo(
+              id: pagoPendiente.id,
+              planCodigo: pagoPendiente.planCodigo,
+              monto: pagoPendiente.monto,
+              estado: pagoPendiente.estado,
+              fechaPago: pagoPendiente.fechaPagoUsuario,
+              createdAt: pagoPendiente.createdAt,
+            );
+            
+            // Crear nueva suscripción con pago pendiente
+            _suscripcionActual = Suscripcion(
+              id: _suscripcionActual!.id,
+              userId: _suscripcionActual!.userId,
+              planType: _suscripcionActual!.planType,
+              planName: _suscripcionActual!.planName,
+              precio: _suscripcionActual!.precio,
+              status: _suscripcionActual!.status,
+              fechaInicio: _suscripcionActual!.fechaInicio,
+              fechaFin: _suscripcionActual!.fechaFin,
+              gallosMaximo: _suscripcionActual!.gallosMaximo,
+              topesPorGallo: _suscripcionActual!.topesPorGallo,
+              peleasPorGallo: _suscripcionActual!.peleasPorGallo,
+              vacunasPorGallo: _suscripcionActual!.vacunasPorGallo,
+              createdAt: _suscripcionActual!.createdAt,
+              updatedAt: _suscripcionActual!.updatedAt,
+              diasRestantes: _suscripcionActual!.diasRestantes,
+              estaActiva: _suscripcionActual!.estaActiva,
+              esPremium: _suscripcionActual!.esPremium,
+              pagoPendiente: pagoPendienteInfo, // 🔄 PAGO DE LA API REAL
+            );
+          } else {
+            print('✅ No hay pagos pendientes');
+          }
         }
       } catch (e) {
         print('⚠️ Error verificando pagos: $e');
