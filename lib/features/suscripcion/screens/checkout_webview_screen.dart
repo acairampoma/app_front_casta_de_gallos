@@ -72,7 +72,38 @@ class _CheckoutWebViewScreenState extends State<CheckoutWebViewScreen> {
     }
   }
 
-  void _handlePaymentSuccess() {
+  void _handlePaymentSuccess() async {
+    // Mostrar diálogo de procesamiento
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(color: AppColors.primary),
+            SizedBox(height: 16),
+            Text(
+              '✅ Pago aprobado',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Activando tu suscripción...',
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
+    );
+    
+    // Esperar 3 segundos para que el webhook procese
+    await Future.delayed(Duration(seconds: 3));
+    
+    // Cerrar diálogo
+    if (mounted) Navigator.of(context).pop();
+    
+    // Volver con éxito
     Navigator.of(context).pop({'success': true, 'status': 'approved'});
   }
 

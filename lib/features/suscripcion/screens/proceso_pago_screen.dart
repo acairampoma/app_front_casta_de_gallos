@@ -1265,16 +1265,23 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
     try {
       setState(() => _isConfirmandoPago = true);
 
-      print('💳 [ProcesoPago] === ABRIENDO CHECKOUT DE MERCADO PAGO ===');
-      print('💳 [ProcesoPago] Plan: ${widget.plan.codigo}');
-      print('💳 [ProcesoPago] Monto: S/. ${widget.plan.precio}');
+      print(' [ProcesoPago] === ABRIENDO CHECKOUT DE MERCADO PAGO ===');
+      print(' [ProcesoPago] Plan ID: ${widget.plan.id}');
+      print(' [ProcesoPago] Plan Codigo: "${widget.plan.codigo}"');
+      print(' [ProcesoPago] Plan Nombre: ${widget.plan.nombre}');
+      print(' [ProcesoPago] Monto: S/. ${widget.plan.precio}');
+
+      // Validar que el código del plan no esté vacío
+      if (widget.plan.codigo.isEmpty) {
+        throw Exception('El código del plan está vacío');
+      }
 
       // Crear preferencia de pago con Yape
       final resultado = await MercadoPagoService.crearPreferenciaYape(
         planCodigo: widget.plan.codigo,
       );
 
-      print('💳 [ProcesoPago] Preferencia creada: ${resultado['preference_id']}');
+      print(' [ProcesoPago] Preferencia creada: ${resultado['preference_id']}');
 
       final initPoint = resultado['init_point'];
       
