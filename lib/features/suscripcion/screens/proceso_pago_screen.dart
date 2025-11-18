@@ -3,10 +3,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:async';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../models/suscripcion_models.dart';
 import '../../../models/pago_models.dart';
@@ -15,6 +17,7 @@ import '../../../services/mercadopago_service.dart';
 import '../../../services/firebase_notification_service.dart';
 import '../../../services/auth_service.dart';
 import '../../planes/screens/planes_screen.dart';
+import 'checkout_webview_screen.dart';
 
 class ProcesoPagoScreen extends StatefulWidget {
   final PlanCatalogo plan;
@@ -1261,16 +1264,16 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
     try {
       setState(() => _isConfirmandoPago = true);
 
-      print(' [ProcesoPago] === ABRIENDO CHECKOUT DE MERCADO PAGO ===');
-      print(' [ProcesoPago] Plan: ${widget.plan.codigo}');
-      print(' [ProcesoPago] Monto: S/. ${widget.plan.precio}');
+      print('💳 [ProcesoPago] === ABRIENDO CHECKOUT DE MERCADO PAGO ===');
+      print('💳 [ProcesoPago] Plan: ${widget.plan.codigo}');
+      print('💳 [ProcesoPago] Monto: S/. ${widget.plan.precio}');
 
       // Crear preferencia de pago con Yape
       final resultado = await MercadoPagoService.crearPreferenciaYape(
         planCodigo: widget.plan.codigo,
       );
 
-      print(' [ProcesoPago] Preferencia creada: ${resultado['preference_id']}');
+      print('💳 [ProcesoPago] Preferencia creada: ${resultado['preference_id']}');
 
       final initPoint = resultado['init_point'];
       
@@ -1280,34 +1283,90 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
 
       HapticFeedback.mediumImpact();
 
-      // Abrir checkout de Mercado Pago
-      if (mounted) {
-        // Importar url_launcher
+      if (!mounted) return;
+
+      // MÓVIL: Abrir WebView embebido
+      if (!kIsWeb) {
+        print('📱 [ProcesoPago] Abriendo WebView embebido en móvil');
+        
+        final result = await Navigator.of(context).push<Map<String, dynamic>>(
+          MaterialPageRoute(
+            builder: (context) => CheckoutWebViewScreen(
+              checkoutUrl: initPoint,
+              planNombre: widget.plan.nombre,
+            ),
+          ),
+        );
+
+        if (result != null && mounted) {
+          final success = result['success'] == true;
+          final status = result['status'] as String?;
+
+          if (success && status == 'approved') {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('✅ ¡Pago aprobado! Tu suscripción se activará en breve'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 3),
+              ),
+            );
+          } else if (status == 'pending') {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('⏳ Pago pendiente. Te notificaremos cuando se apruebe'),
+                backgroundColor: Colors.orange,
+                duration: Duration(seconds: 3),
+              ),
+            );
+          } else if (status == 'rejected') {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('❌ Pago rechazado. Intenta con otro método de pago'),
+                backgroundColor: Colors.red,
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+
+          // Navegar a Mi Suscripción
+          await Future.delayed(const Duration(milliseconds: 500));
+          if (mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => const PlanesScreen(abrirMiSuscripcion: true),
+              ),
+            );
+          }
+        }
+      } 
+      // WEB: Abrir en nueva pestaña
+      else {
+        print('🌐 [ProcesoPago] Abriendo en navegador (Web)');
+        
         final Uri url = Uri.parse(initPoint);
         
-        // En web: abrir en nueva pestaña
-        // En móvil: abrir en navegador externo
         if (await canLaunchUrl(url)) {
           await launchUrl(
             url,
-            mode: LaunchMode.externalApplication, // Abre en navegador externo
+            mode: LaunchMode.externalApplication,
           );
           
-          // Mostrar mensaje
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text(' Abriendo checkout de Mercado Pago...\n\nCompleta el pago y regresa a la app'),
+              content: Text('🌐 Abriendo checkout de Mercado Pago...\n\nCompleta el pago y regresa a la app'),
               backgroundColor: Colors.blue,
               duration: Duration(seconds: 5),
             ),
           );
           
-          // Navegar a pantalla de espera
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => const PlanesScreen(abrirMiSuscripcion: true),
-            ),
-          );
+          await Future.delayed(const Duration(milliseconds: 500));
+          if (mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => const PlanesScreen(abrirMiSuscripcion: true),
+              ),
+            );
+          }
         } else {
           throw Exception('No se pudo abrir el link de pago');
         }
@@ -1316,7 +1375,9 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
     } catch (e) {
       _mostrarError('Error abriendo checkout: $e');
     } finally {
-      setState(() => _isConfirmandoPago = false);
+      if (mounted) {
+        setState(() => _isConfirmandoPago = false);
+      }
     }
   }
 
