@@ -210,9 +210,9 @@ class _PlanesScreenState extends State<PlanesScreen>
           } else {
             print('✅ No hay pagos pendientes');
           }
+        } catch (e) {
+          print('⚠️ Error verificando pagos: $e');
         }
-      } catch (e) {
-        print('⚠️ Error verificando pagos: $e');
       }
       
       _suscripcionLoaded = true;
