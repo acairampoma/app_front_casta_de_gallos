@@ -283,28 +283,70 @@ class _PedigriScreenState extends State<PedigriScreen> {
   Widget _buildFilterSection() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        gradient: showMainOnly
+            ? LinearGradient(
+                colors: [
+                  AppColors.primary.withOpacity(0.1),
+                  AppColors.primary.withOpacity(0.05),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : null,
+        color: showMainOnly ? null : Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(
+          color: showMainOnly ? AppColors.primary.withOpacity(0.5) : Colors.grey[300]!,
+          width: showMainOnly ? 2 : 1,
+        ),
+        boxShadow: showMainOnly
+            ? [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
       ),
       child: Row(
         children: [
-          Icon(
-            showMainOnly ? Icons.filter_list : Icons.filter_list_off,
-            color: showMainOnly ? AppColors.primary : Colors.grey[600],
-            size: 20,
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: showMainOnly ? AppColors.primary.withOpacity(0.15) : Colors.grey[100],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              showMainOnly ? Icons.filter_list : Icons.filter_list_off,
+              color: showMainOnly ? AppColors.primary : Colors.grey[600],
+              size: 22,
+            ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Expanded(
-            child: Text(
-              'Mostrar solo gallos principales',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey[700],
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Mostrar solo gallos principales',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: showMainOnly ? AppColors.primary : Colors.grey[800],
+                  ),
+                ),
+                if (showMainOnly)
+                  Text(
+                    'Filtrando por gallos únicos',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.primary.withOpacity(0.7),
+                    ),
+                  ),
+              ],
             ),
           ),
           Switch(
@@ -315,6 +357,7 @@ class _PedigriScreenState extends State<PedigriScreen> {
               _loadData(); // Recargar con el nuevo filtro
             },
             activeColor: AppColors.primary,
+            activeTrackColor: AppColors.primary.withOpacity(0.5),
           ),
         ],
       ),
