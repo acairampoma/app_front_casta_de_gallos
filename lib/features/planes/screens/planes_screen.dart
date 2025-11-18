@@ -61,6 +61,15 @@ class _PlanesScreenState extends State<PlanesScreen>
     int initialIndex = widget.abrirMiSuscripcion ? 1 : 0;
     _tabController = TabController(length: 2, vsync: this, initialIndex: initialIndex);
     
+    // Listener para recargar cuando cambie a "Mi Suscripción"
+    _tabController.addListener(() {
+      if (_tabController.index == 1 && !_tabController.indexIsChanging) {
+        // Usuario cambió a pestaña "Mi Suscripción"
+        print('🔄 Usuario cambió a Mi Suscripción - recargando datos...');
+        _recargarSuscripcion();
+      }
+    });
+    
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
@@ -217,6 +226,94 @@ class _PlanesScreenState extends State<PlanesScreen>
     // Vibración si viene de upgrade
     if (widget.origenUpgrade != null) {
       HapticFeedback.mediumImpact();
+    }
+  }
+
+  /// 🔄 Recargar solo suscripción y límites (más rápido)
+  Future<void> _recargarSuscripcion() async {
+    try {
+      print('🔄 Recargando suscripción actual...');
+      final suscripcion = await SuscripcionService.obtenerSuscripcionActual();
+      
+      // Verificar pagos pendientes solo si NO está activa
+      if (suscripcion?.status?.toLowerCase() == 'active') {
+        print('✅ Suscripción ACTIVA - sin pagos pendientes');
+        setState(() {
+          _suscripcionActual = suscripcion;
+          _suscripcionLoaded = true;
+        });
+      } else {
+        // Buscar pagos pendientes
+        try {
+          final misPagos = await PagoService.obtenerMisPagos();
+          final pagosPendientes = misPagos.where((pago) => 
+            pago.estado.toLowerCase() == 'pendiente' || 
+            pago.estado.toLowerCase() == 'verificando'
+          ).toList();
+          
+          if (pagosPendientes.isNotEmpty) {
+            final pagoPendiente = pagosPendientes.first;
+            final pagoPendienteInfo = PagoPendienteInfo(
+              id: pagoPendiente.id,
+              planCodigo: pagoPendiente.planCodigo,
+              monto: pagoPendiente.monto,
+              estado: pagoPendiente.estado,
+              fechaPago: pagoPendiente.fechaPagoUsuario,
+              createdAt: pagoPendiente.createdAt,
+            );
+            
+            setState(() {
+              _suscripcionActual = Suscripcion(
+                id: suscripcion!.id,
+                userId: suscripcion.userId,
+                planType: suscripcion.planType,
+                planName: suscripcion.planName,
+                precio: suscripcion.precio,
+                status: suscripcion.status,
+                fechaInicio: suscripcion.fechaInicio,
+                fechaFin: suscripcion.fechaFin,
+                gallosMaximo: suscripcion.gallosMaximo,
+                topesPorGallo: suscripcion.topesPorGallo,
+                peleasPorGallo: suscripcion.peleasPorGallo,
+                vacunasPorGallo: suscripcion.vacunasPorGallo,
+                createdAt: suscripcion.createdAt,
+                updatedAt: suscripcion.updatedAt,
+                diasRestantes: suscripcion.diasRestantes,
+                estaActiva: suscripcion.estaActiva,
+                esPremium: suscripcion.esPremium,
+                pagoPendiente: pagoPendienteInfo,
+              );
+              _suscripcionLoaded = true;
+            });
+          } else {
+            setState(() {
+              _suscripcionActual = suscripcion;
+              _suscripcionLoaded = true;
+            });
+          }
+        } catch (e) {
+          print('⚠️ Error verificando pagos: $e');
+          setState(() {
+            _suscripcionActual = suscripcion;
+            _suscripcionLoaded = true;
+          });
+        }
+      }
+      
+      // También recargar límites
+      try {
+        final limites = await SuscripcionService.obtenerLimitesActuales();
+        setState(() {
+          _limitesActuales = limites;
+          _limitesLoaded = true;
+        });
+      } catch (e) {
+        print('⚠️ Error recargando límites: $e');
+      }
+      
+      print('✅ Suscripción recargada exitosamente');
+    } catch (e) {
+      print('❌ Error recargando suscripción: $e');
     }
   }
 
