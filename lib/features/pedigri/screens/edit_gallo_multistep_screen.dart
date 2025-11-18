@@ -78,6 +78,10 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
   String? _madreLugarPlaca;
   bool _crearMadre = false;
 
+  // ===== FOTOS DE PADRE Y MADRE =====
+  final List<dynamic> _padreFotos = []; // Fotos del padre
+  final List<dynamic> _madreFotos = []; // Fotos de la madre
+
   // ===== CONTROLADORES FASE 4: 📋 Notas Finales =====
   late TextEditingController _notasFinalesController;
 
@@ -788,6 +792,82 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
     } catch (e) {
       _showSnackBar('Error seleccionando adicionales: $e', isError: true);
     }
+  }
+
+  // ===== SELECCIONAR MÚLTIPLES FOTOS PARA PADRE =====
+  Future<void> _pickPadreFotos() async {
+    try {
+      final List<XFile> images = await _imagePicker.pickMultiImage(
+        imageQuality: 85,
+        maxWidth: 1920,
+        maxHeight: 1920,
+      );
+      if (images.isEmpty) return;
+      
+      setState(() {
+        for (final img in images) {
+          if (_padreFotos.length >= 5) {
+            _showSnackBar('⚠️ Máximo 5 fotos por padre', isError: true);
+            break;
+          }
+          if (kIsWeb) {
+            _padreFotos.add(img);
+          } else {
+            _padreFotos.add(File(img.path));
+          }
+        }
+      });
+      
+      _showSnackBar('✅ ${images.length} foto(s) agregada(s) para el padre');
+    } catch (e) {
+      _showSnackBar('Error seleccionando fotos del padre: $e', isError: true);
+    }
+  }
+
+  // ===== SELECCIONAR MÚLTIPLES FOTOS PARA MADRE =====
+  Future<void> _pickMadreFotos() async {
+    try {
+      final List<XFile> images = await _imagePicker.pickMultiImage(
+        imageQuality: 85,
+        maxWidth: 1920,
+        maxHeight: 1920,
+      );
+      if (images.isEmpty) return;
+      
+      setState(() {
+        for (final img in images) {
+          if (_madreFotos.length >= 5) {
+            _showSnackBar('⚠️ Máximo 5 fotos por madre', isError: true);
+            break;
+          }
+          if (kIsWeb) {
+            _madreFotos.add(img);
+          } else {
+            _madreFotos.add(File(img.path));
+          }
+        }
+      });
+      
+      _showSnackBar('✅ ${images.length} foto(s) agregada(s) para la madre');
+    } catch (e) {
+      _showSnackBar('Error seleccionando fotos de la madre: $e', isError: true);
+    }
+  }
+
+  // ===== ELIMINAR FOTO DE PADRE =====
+  void _removePadrePhoto(int index) {
+    setState(() {
+      _padreFotos.removeAt(index);
+    });
+    _showSnackBar('Foto del padre eliminada');
+  }
+
+  // ===== ELIMINAR FOTO DE MADRE =====
+  void _removeMadrePhoto(int index) {
+    setState(() {
+      _madreFotos.removeAt(index);
+    });
+    _showSnackBar('Foto de la madre eliminada');
   }
 
   // ===== GUARDAR GALLO ÉPICO =====
@@ -1895,6 +1975,17 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
               onChanged: (value) => setState(() => _padreLugarPlaca = value),
               icon: Icons.location_on,
             ),
+            const SizedBox(height: 20),
+            
+            // ===== FOTOS DEL PADRE =====
+            _buildFotosSection(
+              titulo: 'Fotos del Padre',
+              fotos: _padreFotos,
+              onAgregarFotos: _pickPadreFotos,
+              onEliminarFoto: _removePadrePhoto,
+              icono: Icons.photo_library,
+              color: Colors.blue,
+            ),
           ] else ...[
             const SizedBox(height: 20),
             Container(
@@ -2018,6 +2109,17 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
               items: _ubicacionesPlaca,
               onChanged: (value) => setState(() => _madreLugarPlaca = value),
               icon: Icons.location_on,
+            ),
+            const SizedBox(height: 20),
+            
+            // ===== FOTOS DE LA MADRE =====
+            _buildFotosSection(
+              titulo: 'Fotos de la Madre',
+              fotos: _madreFotos,
+              onAgregarFotos: _pickMadreFotos,
+              onEliminarFoto: _removeMadrePhoto,
+              icono: Icons.photo_library,
+              color: Colors.pink,
             ),
           ] else ...[
             const SizedBox(height: 20),
@@ -2803,5 +2905,145 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
       debugPrint('❌ Error en _deleteFotoFromBackend: $e');
       throw e;
     }
+  }
+
+  // ===== WIDGET DE SECCIÓN DE FOTOS =====
+  Widget _buildFotosSection({
+    required String titulo,
+    required List<dynamic> fotos,
+    required VoidCallback onAgregarFotos,
+    required Function(int) onEliminarFoto,
+    required IconData icono,
+    required Color color,
+  }) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icono, color: color, size: 24),
+                const SizedBox(width: 8),
+                Text(
+                  titulo,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${fotos.length}/5',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            
+            // Botón para agregar fotos
+            ElevatedButton.icon(
+              onPressed: fotos.length < 5 ? onAgregarFotos : null,
+              icon: const Icon(Icons.add_photo_alternate),
+              label: Text(fotos.isEmpty ? 'Agregar Fotos' : 'Agregar Más'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: color,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+            
+            // Grid de fotos seleccionadas
+            if (fotos.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                ),
+                itemCount: fotos.length,
+                itemBuilder: (context, index) {
+                  final foto = fotos[index];
+                  return Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: kIsWeb
+                            ? Image.network(
+                                (foto as XFile).path,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: Colors.grey[300],
+                                    child: const Icon(Icons.broken_image),
+                                  );
+                                },
+                              )
+                            : Image.file(
+                                foto as File,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: Colors.grey[300],
+                                    child: const Icon(Icons.broken_image),
+                                  );
+                                },
+                              ),
+                      ),
+                      Positioned(
+                        top: 4,
+                        right: 4,
+                        child: GestureDetector(
+                          onTap: () => onEliminarFoto(index),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+            
+            // Mensaje informativo
+            if (fotos.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(
+                  'Puedes agregar hasta 5 fotos',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }
