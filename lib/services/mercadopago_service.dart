@@ -81,46 +81,33 @@ class MercadoPagoService {
     }
   }
 
-  /// 📱 Pagar con Yape usando Mercado Pago
-  static Future<Map<String, dynamic>> pagarConYape({
-    required String numeroTelefono,
-    required String otp,
+  /// 📱 Crear preferencia de pago con Yape
+  static Future<Map<String, dynamic>> crearPreferenciaYape({
     required String planCodigo,
-    required double monto,
   }) async {
     try {
-      print('📱 [MercadoPagoService] Procesando pago con Yape');
-      print('   Teléfono: $numeroTelefono');
+      print('📱 [MercadoPagoService] Creando preferencia de pago con Yape');
       print('   Plan: $planCodigo');
-      print('   Monto: S/. $monto');
-
-      final headers = await _getAuthHeaders();
-      final body = jsonEncode({
-        'numero_telefono': numeroTelefono,
-        'otp': otp,
-        'plan_codigo': planCodigo,
-        'monto': monto,
-      });
 
       final response = await http.post(
-        Uri.parse('$baseUrl/api/v1/mercadopago/pagar-con-yape'),
-        headers: headers,
-        body: body,
+        Uri.parse('$baseUrl/mercadopago/pagar-con-yape?plan_codigo=$planCodigo'),
+        headers: await _getAuthHeaders(),
       );
 
       print('📡 Status Code: ${response.statusCode}');
       print('📄 Response: ${response.body}');
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final jsonData = jsonDecode(response.body);
-        print('✅ Pago con Yape procesado exitosamente');
-        return jsonData;
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print('✅ Preferencia de Yape creada exitosamente');
+        print('🔗 Init Point: ${data['init_point']}');
+        return data;
       } else {
-        final errorData = jsonDecode(response.body);
-        throw Exception(errorData['detail'] ?? 'Error procesando pago con Yape');
+        final error = jsonDecode(response.body);
+        throw Exception(error['detail'] ?? 'Error creando preferencia de Yape');
       }
     } catch (e) {
-      print('❌ Error procesando pago con Yape: $e');
+      print('❌ Error creando preferencia de Yape: $e');
       rethrow;
     }
   }

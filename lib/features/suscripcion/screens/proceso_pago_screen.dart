@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../models/suscripcion_models.dart';
 import '../../../models/pago_models.dart';
@@ -1255,105 +1256,65 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
     }
   }
 
-  /// Confirmar pago con Yape usando Mercado Pago API
+  /// Abrir checkout de Mercado Pago con Yape
   Future<void> _confirmarPago() async {
-    // VALIDACIÓN: Número y código OTP obligatorios
-    final numeroYape = _numeroYapeController.text.trim();
-    final otp = _codigoConfirmacionController.text.trim();
-    
-    if (numeroYape.length != 9) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(' El número de Yape debe tener 9 dígitos'),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 3),
-        ),
-      );
-      return;
-    }
-
-    if (otp.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(' Debes ingresar el código OTP de Yape'),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 3),
-        ),
-      );
-      return;
-    }
-
     try {
       setState(() => _isConfirmandoPago = true);
 
-      print(' [ProcesoPago] === PROCESANDO PAGO CON YAPE (MERCADO PAGO) ===');
-      print(' [ProcesoPago] Número Yape: $numeroYape');
-      print(' [ProcesoPago] OTP: ${otp.substring(0, 3)}***');
+      print(' [ProcesoPago] === ABRIENDO CHECKOUT DE MERCADO PAGO ===');
       print(' [ProcesoPago] Plan: ${widget.plan.codigo}');
       print(' [ProcesoPago] Monto: S/. ${widget.plan.precio}');
 
-      // Llamar a Mercado Pago API para procesar pago con Yape
-      final resultado = await MercadoPagoService.pagarConYape(
-        numeroTelefono: numeroYape,
-        otp: otp,
+      // Crear preferencia de pago con Yape
+      final resultado = await MercadoPagoService.crearPreferenciaYape(
         planCodigo: widget.plan.codigo,
-        monto: widget.plan.precio,
       );
 
-      print(' [ProcesoPago] Respuesta de Mercado Pago: $resultado');
+      print(' [ProcesoPago] Preferencia creada: ${resultado['preference_id']}');
+
+      final initPoint = resultado['init_point'];
+      
+      if (initPoint == null || initPoint.isEmpty) {
+        throw Exception('No se pudo obtener el link de pago');
+      }
 
       HapticFeedback.mediumImpact();
 
-      // ENVIAR NOTIFICACIÓN PUSH AL ADMIN
-      try {
-        final currentUser = AuthService.instance.currentUser;
-        final currentProfile = AuthService.instance.currentProfile;
-
-        if (currentUser != null) {
-          await FirebaseNotificationService.notificarSuscripcionAAdmin(
-            nombreUsuario: currentProfile?.nombreCompleto ?? currentUser.email,
-            emailUsuario: currentUser.email,
-            planElegido: widget.plan.nombre,
-            monto: widget.plan.precio,
-          );
-          print(' Notificación enviada al admin');
-        }
-      } catch (e) {
-        print(' Error enviando notificación al admin: $e');
-        // No falla el proceso si la notificación falla
-      }
-      
-      // REDIRECCIÓN DIRECTA A MI SUSCRIPCIÓN
+      // Abrir checkout de Mercado Pago
       if (mounted) {
-        final estado = resultado['status'] ?? 'unknown';
-        final mensaje = estado == 'approved' 
-          ? ' ¡Pago Aprobado! Tu suscripción está activa'
-          : ' Pago en proceso. Te notificaremos cuando se apruebe';
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(mensaje),
-            backgroundColor: estado == 'approved' ? Colors.green : Colors.orange,
-            duration: const Duration(seconds: 5),
-          ),
-        );
+        // Importar url_launcher
+        final Uri url = Uri.parse(initPoint);
         
-        // Pequeño delay para que se vea el mensaje
-        await Future.delayed(const Duration(milliseconds: 500));
-        
-        // Navegar directo a PlanesScreen con pestaña Mi Suscripción abierta
-        if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
+        // En web: abrir en nueva pestaña
+        // En móvil: abrir en navegador externo
+        if (await canLaunchUrl(url)) {
+          await launchUrl(
+            url,
+            mode: LaunchMode.externalApplication, // Abre en navegador externo
+          );
+          
+          // Mostrar mensaje
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(' Abriendo checkout de Mercado Pago...\n\nCompleta el pago y regresa a la app'),
+              backgroundColor: Colors.blue,
+              duration: Duration(seconds: 5),
+            ),
+          );
+          
+          // Navegar a pantalla de espera
+          Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (context) => const PlanesScreen(abrirMiSuscripcion: true),
             ),
-            (route) => false,
           );
+        } else {
+          throw Exception('No se pudo abrir el link de pago');
         }
       }
 
     } catch (e) {
-      _mostrarError('Error confirmando pago: $e');
+      _mostrarError('Error abriendo checkout: $e');
     } finally {
       setState(() => _isConfirmandoPago = false);
     }
@@ -1475,34 +1436,31 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
     
     switch (_tabController.index) {
       case 0:
-        // Paso 1: Siempre permitir continuar
-        return () async {
-          HapticFeedback.lightImpact();
-          setState(() => _isConfirmandoPago = true);
-          await Future.delayed(const Duration(milliseconds: 300));
-          _tabController.animateTo(1);
-          setState(() => _isConfirmandoPago = false);
-        };
+        // Paso 1: Abrir checkout de Mercado Pago directamente
+        return _confirmarPago;
         
       case 1:
-        // Paso 2: Validar que tenga número y código
-        final tieneNumero = _numeroYapeController.text.trim().length == 9;
-        final tieneCodigo = _codigoConfirmacionController.text.trim().isNotEmpty;
-        
-        return tieneNumero && tieneCodigo
+        // Paso 2: Validar comprobante subido
+        return _comprobanteSubido
           ? () async {
               HapticFeedback.lightImpact();
               _tabController.animateTo(2);
             }
-          : null; // Deshabilitar si faltan datos
+          : _comprobanteImagen != null
+              ? _subirComprobanteYContinuar
+              : null;
           
       case 2:
-        // Paso 3: Permitir confirmar si tiene los datos obligatorios
-        final tieneNumero = _numeroYapeController.text.trim().length == 9;
-        final tieneCodigo = _codigoConfirmacionController.text.trim().isNotEmpty;
-        
-        return tieneNumero && tieneCodigo
-          ? _confirmarPago
+        // Paso 3: Confirmar pago manual (si es necesario)
+        return _comprobanteSubido
+          ? () async {
+              // Navegar a Mi Suscripción
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => const PlanesScreen(abrirMiSuscripcion: true),
+                ),
+              );
+            }
           : null;
           
       default:
@@ -1512,31 +1470,25 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
 
   String _getNextButtonText() {
     if (_isConfirmandoPago) {
-      switch (_tabController.index) {
-        case 0:
-          return 'Cargando...';
-        case 1:
-          return 'Cargando...';
-        case 2:
-          return 'Procesando pago...';
-        default:
-          return 'Procesando...';
-      }
+      return 'Abriendo checkout...';
+    }
+    
+    if (_isSubiendoComprobante) {
+      return 'Subiendo comprobante...';
     }
     
     switch (_tabController.index) {
       case 0:
-        return 'Ya Pagué - Continuar';
+        return '💳 Pagar con Yape';
       case 1:
-        final tieneNumero = _numeroYapeController.text.trim().length == 9;
-        final tieneCodigo = _codigoConfirmacionController.text.trim().isNotEmpty;
-        
-        if (!tieneNumero || !tieneCodigo) {
-          return 'Completa los datos requeridos';
+        if (_comprobanteSubido) {
+          return 'Continuar';
         }
-        return 'Continuar a Confirmación';
+        return _comprobanteImagen != null
+            ? 'Subir Comprobante'
+            : 'Selecciona comprobante';
       case 2:
-        return 'Confirmar Pago';
+        return 'Ver Mi Suscripción';
       default:
         return 'Siguiente';
     }
