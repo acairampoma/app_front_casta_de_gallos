@@ -1075,7 +1075,8 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
     if (_pesoController.text.isNotEmpty) data['peso'] = double.tryParse(_pesoController.text);
     if (_alturaController.text.isNotEmpty) data['altura'] = int.tryParse(_alturaController.text);
     if (_criadorController.text.isNotEmpty) data['criador'] = _criadorController.text.trim();
-    if (_propietarioController.text.isNotEmpty) data['propietario_actual'] = _propietarioController.text.trim();
+    // Campo 'propietario_actual' eliminado según requerimiento
+    // if (_propietarioController.text.isNotEmpty) data['propietario_actual'] = _propietarioController.text.trim();
     if (_observacionesController.text.isNotEmpty) data['observaciones'] = _observacionesController.text.trim();
     
     // DATOS OPCIONALES FASE 4
@@ -1795,14 +1796,6 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
               label: 'Criador',
               icon: Icons.person,
               hint: 'Nombre del criador',
-            ),
-            const SizedBox(height: 16),
-            
-            _buildEpicTextField(
-              controller: _propietarioController,
-              label: 'Propietario Actual',
-              icon: Icons.person_outline,
-              hint: 'Nombre del propietario actual',
             ),
             const SizedBox(height: 16),
             

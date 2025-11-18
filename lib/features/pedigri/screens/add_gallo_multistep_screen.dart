@@ -384,16 +384,7 @@ class _AddGalloMultistepScreenState extends State<AddGalloMultistepScreen> with 
           ),
           const SizedBox(height: 16),
           
-          // 7. Propietario Actual
-          _buildEpicTextField(
-            controller: _propietarioController,
-            label: 'Propietario Actual',
-            hint: 'Nombre del propietario',
-            icon: Icons.person_outline,
-          ),
-          const SizedBox(height: 16),
-          
-          // 8. Observaciones
+          // 7. Observaciones
           _buildEpicTextField(
             controller: _observacionesController,
             label: 'Observaciones',
@@ -1724,7 +1715,8 @@ class _AddGalloMultistepScreenState extends State<AddGalloMultistepScreen> with 
     if (_colorPatas != null) data['color_patas'] = _colorPatas;
     if (_colorPlumaje != null) data['color'] = _colorPlumaje;
     if (_criadorController.text.isNotEmpty) data['criador'] = _criadorController.text.trim();
-    if (_propietarioController.text.isNotEmpty) data['propietario_actual'] = _propietarioController.text.trim();
+    // Campo 'propietario_actual' eliminado según requerimiento
+    // if (_propietarioController.text.isNotEmpty) data['propietario_actual'] = _propietarioController.text.trim();
     if (_observacionesController.text.isNotEmpty) data['observaciones'] = _observacionesController.text.trim();
     
     // DATOS FASE 4
