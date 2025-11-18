@@ -509,33 +509,50 @@ class _PedigriScreenState extends State<PedigriScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10), // Reducido de 12 a 10
-                    // 🌳 BOTÓN COMPACTO Y ELEGANTE
-                    InkWell(
-                      onTap: () => _showGenealogyTree(gallo),
-                      borderRadius: BorderRadius.circular(6),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), // Más compacto
-                        decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.1),
-                          border: Border.all(color: Colors.green.withOpacity(0.3)),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.account_tree, size: 14, color: Colors.green),
-                            SizedBox(width: 6),
-                            Text(
-                              'Ver Árbol Genealógico',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.green,
-                                fontWeight: FontWeight.w500,
-                              ),
+                    const SizedBox(height: 12),
+                    // BOTÓN GENEALOGÍA - MEJORADO PARA MAYOR VISIBILIDAD
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => _showGenealogyTree(gallo),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.green.shade400,
+                                Colors.green.shade600,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
-                          ],
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.green.withOpacity(0.3),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.account_tree, size: 18, color: Colors.white),
+                              SizedBox(width: 8),
+                              Text(
+                                'Ver Árbol Genealógico',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
