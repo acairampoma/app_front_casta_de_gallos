@@ -90,7 +90,7 @@ class MercadoPagoService {
       print('   Plan: $planCodigo');
 
       final response = await http.post(
-        Uri.parse('$baseUrl/mercadopago/pagar-con-yape?plan_codigo=$planCodigo'),
+        Uri.parse('$baseUrl/api/v1/mercadopago/pagar-con-yape?plan_codigo=$planCodigo'),
         headers: await _getAuthHeaders(),
       );
 
