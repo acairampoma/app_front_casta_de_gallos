@@ -30,6 +30,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   Map<String, dynamic>? _dashboardData;
   List<Map<String, dynamic>> _pagosPendientes = [];
   List<Map<String, dynamic>> _usuarios = [];
+  Map<String, dynamic> _estadisticasUsuarios = {};
+  int _totalUsuarios = 0;
+  int _paginaActual = 0;
+  int _usuariosPorPagina = 20;
   
   // 🔄 ESTADOS DE CARGA
   bool _isLoadingDashboard = false;
@@ -268,11 +272,37 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     }
   }
 
-  // 👥 TAB 3: Cargar Usuarios
+  // 👥 TAB 3: Cargar Estadísticas de Usuarios
+  Future<void> _cargarEstadisticasUsuarios() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('access_token');
+      
+      final response = await http.get(
+        Uri.parse('https://gallerappback-production.up.railway.app/api/v1/admin/usuarios/estadisticas'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _estadisticasUsuarios = data;
+        });
+        print('✅ [ADMIN-EPIC-TAB3] Estadísticas cargadas: $data');
+      }
+    } catch (e) {
+      print('❌ [ADMIN-EPIC-TAB3] Error cargando estadísticas: $e');
+    }
+  }
+
+  // 👥 TAB 3: Cargar Usuarios con Paginación
   Future<void> _cargarUsuarios() async {
     if (_isLoadingUsuarios) return;
     
-    print('👥 [ADMIN-EPIC-TAB3] Cargando usuarios...');
+    print('👥 [ADMIN-EPIC-TAB3] Cargando usuarios página ${_paginaActual + 1}...');
     setState(() {
       _isLoadingUsuarios = true;
       _errorUsuarios = null;
@@ -282,8 +312,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('access_token');
       
+      final skip = _paginaActual * _usuariosPorPagina;
       final response = await http.get(
-        Uri.parse('https://gallerappback-production.up.railway.app/api/v1/admin/usuarios?limit=200'),
+        Uri.parse('https://gallerappback-production.up.railway.app/api/v1/admin/usuarios?limit=$_usuariosPorPagina&skip=$skip'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -293,12 +324,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       print('👥 [ADMIN-EPIC-TAB3] Response: ${response.statusCode}');
       
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
+        final data = json.decode(response.body);
         setState(() {
-          _usuarios = List<Map<String, dynamic>>.from(data);
+          _usuarios = List<Map<String, dynamic>>.from(data['usuarios']);
+          _totalUsuarios = data['total'];
           _isLoadingUsuarios = false;
         });
-        print('✅ [ADMIN-EPIC-TAB3] Usuarios cargados: ${_usuarios.length}');
+        print('✅ [ADMIN-EPIC-TAB3] Usuarios cargados: ${_usuarios.length} de $_totalUsuarios');
+        
+        // Cargar estadísticas también
+        _cargarEstadisticasUsuarios();
       } else {
         throw Exception('Error: ${response.statusCode}');
       }
@@ -309,6 +344,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _isLoadingUsuarios = false;
       });
     }
+  }
+
+  // 👥 Cambiar de página
+  void _cambiarPagina(int nuevaPagina) {
+    setState(() {
+      _paginaActual = nuevaPagina;
+    });
+    _cargarUsuarios();
   }
 
   @override
@@ -1415,6 +1458,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
   // 👥 TAB 3: Usuarios Épico
   Widget _buildUsuariosTabEpic() {
+    final totalPaginas = (_totalUsuarios / _usuariosPorPagina).ceil();
+    
     return Column(
       children: [
         // Filtros y búsqueda épicos
@@ -1439,16 +1484,61 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                         ],
                       ),
                     )
-                  : RefreshIndicator(
-                      onRefresh: _cargarUsuarios,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _usuariosFiltrados().length,
-                        itemBuilder: (context, index) {
-                          final usuario = _usuariosFiltrados()[index];
-                          return _buildUsuarioCardEpic(usuario);
-                        },
-                      ),
+                  : Column(
+                      children: [
+                        Expanded(
+                          child: RefreshIndicator(
+                            onRefresh: _cargarUsuarios,
+                            child: ListView.builder(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: _usuariosFiltrados().length,
+                              itemBuilder: (context, index) {
+                                final usuario = _usuariosFiltrados()[index];
+                                return _buildUsuarioCardEpic(usuario);
+                              },
+                            ),
+                          ),
+                        ),
+                        // Controles de paginación
+                        if (totalPaginas > 1)
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, -2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                ElevatedButton.icon(
+                                  onPressed: _paginaActual > 0
+                                      ? () => _cambiarPagina(_paginaActual - 1)
+                                      : null,
+                                  icon: const Icon(Icons.chevron_left),
+                                  label: const Text('Anterior'),
+                                ),
+                                Text(
+                                  'Página ${_paginaActual + 1} de $totalPaginas',
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                ElevatedButton.icon(
+                                  onPressed: _paginaActual < totalPaginas - 1
+                                      ? () => _cambiarPagina(_paginaActual + 1)
+                                      : null,
+                                  icon: const Icon(Icons.chevron_right),
+                                  label: const Text('Siguiente'),
+                                  iconAlignment: IconAlignment.end,
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
                     ),
         ),
       ],
@@ -1522,19 +1612,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           
           const SizedBox(height: 12),
           
-          // Métricas de usuarios por tipo de plan
+          // Métricas de usuarios por tipo de plan (desde endpoint de estadísticas)
           Column(
             children: [
               Row(
                 children: [
                   _buildUsuarioMetric(
                     'Total', 
-                    '${_usuarios.length}', 
+                    '${_estadisticasUsuarios['total'] ?? 0}', 
                     Colors.blue,
                   ),
                   _buildUsuarioMetric(
                     'Premium', 
-                    '${_usuarios.where((u) => u['plan_type'] == 'premium').length}', 
+                    '${_estadisticasUsuarios['premium'] ?? 0}', 
                     Colors.amber,
                   ),
                 ],
@@ -1544,12 +1634,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 children: [
                   _buildUsuarioMetric(
                     'Básico', 
-                    '${_usuarios.where((u) => u['plan_type'] == 'basico').length}', 
+                    '${_estadisticasUsuarios['basico'] ?? 0}', 
                     Colors.green,
                   ),
                   _buildUsuarioMetric(
                     'Gratuitos', 
-                    '${_usuarios.where((u) => u['plan_type'] == null || u['plan_type'] == 'gratuito').length}', 
+                    '${_estadisticasUsuarios['gratuito'] ?? 0}', 
                     Colors.grey,
                   ),
                 ],
