@@ -48,6 +48,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   String _filtroActual = "hoy";
   String _searchQuery = "";
   bool _soloUsuariosPremium = false;
+  String? _filtroPlanType; // null = todos, 'premium', 'basico', 'gratuito'
 
   @override
   void initState() {
@@ -313,8 +314,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       final token = prefs.getString('access_token');
       
       final skip = _paginaActual * _usuariosPorPagina;
+      
+      // Construir URL con filtros
+      String url = 'https://gallerappback-production.up.railway.app/api/v1/admin/usuarios?limit=$_usuariosPorPagina&skip=$skip';
+      if (_filtroPlanType != null) {
+        url += '&plan_type=$_filtroPlanType';
+      }
+      
       final response = await http.get(
-        Uri.parse('https://gallerappback-production.up.railway.app/api/v1/admin/usuarios?limit=$_usuariosPorPagina&skip=$skip'),
+        Uri.parse(url),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -1647,40 +1655,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  // 📊 Métrica de Usuario
-  Widget _buildUsuarioMetric(String label, String value, Color color) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: color.withOpacity(0.8),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
