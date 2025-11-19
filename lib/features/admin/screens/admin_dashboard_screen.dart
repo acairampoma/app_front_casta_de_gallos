@@ -1659,6 +1659,73 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     );
   }
 
+  // 📊 Métrica de Usuario (Clickeable)
+  Widget _buildUsuarioMetric(String label, String value, Color color) {
+    // Determinar el filtro según el label
+    String? planTypeFilter;
+    if (label == 'Premium') planTypeFilter = 'premium';
+    else if (label == 'Básico') planTypeFilter = 'basico';
+    else if (label == 'Gratuitos') planTypeFilter = 'gratuito';
+    // Total no tiene filtro (null)
+    
+    final isSelected = _filtroPlanType == planTypeFilter;
+    
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            // Si ya está seleccionado, deseleccionar (mostrar todos)
+            if (_filtroPlanType == planTypeFilter) {
+              _filtroPlanType = null;
+            } else {
+              _filtroPlanType = planTypeFilter;
+            }
+            _paginaActual = 0; // Resetear a primera página
+          });
+          _cargarUsuarios(); // Recargar con filtro
+        },
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isSelected ? color : color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isSelected ? color : color.withOpacity(0.3),
+              width: isSelected ? 2 : 1,
+            ),
+            boxShadow: isSelected ? [
+              BoxShadow(
+                color: color.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ] : null,
+          ),
+          child: Column(
+            children: [
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected ? Colors.white : color,
+                ),
+              ),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isSelected ? Colors.white.withOpacity(0.9) : color.withOpacity(0.8),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   // 👤 Card de Usuario Épico
   Widget _buildUsuarioCardEpic(Map<String, dynamic> usuario) {
     return Card(
