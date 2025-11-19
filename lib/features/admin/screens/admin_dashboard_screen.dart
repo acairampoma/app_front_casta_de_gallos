@@ -1627,7 +1627,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             Text('Registro: ${usuario['created_at']?.split('T')[0] ?? 'N/A'}'),
             if (usuario['suscripcion'] != null)
               Text(
-                'Plan: ${usuario['suscripcion']['plan']} - Expira: ${usuario['suscripcion']['fecha_fin']}',
+                'Plan: ${usuario['suscripcion']['plan']} - Expira: ${usuario['suscripcion']['fecha_fin'] ?? 'Sin fecha'}',
                 style: const TextStyle(
                   color: Colors.green,
                   fontWeight: FontWeight.bold,
@@ -1677,8 +1677,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  _buildUsuarioDetalle('Plan actual', usuario['suscripcion']['plan']),
-                  _buildUsuarioDetalle('Fecha de expiración', usuario['suscripcion']['fecha_fin']),
+                  _buildUsuarioDetalle('Plan actual', usuario['suscripcion']['plan'] ?? 'Sin plan'),
+                  _buildUsuarioDetalle('Fecha de expiración', usuario['suscripcion']['fecha_fin'] ?? 'Sin fecha'),
                 ],
               ],
             ),
