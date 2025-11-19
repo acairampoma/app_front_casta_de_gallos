@@ -283,7 +283,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       final token = prefs.getString('access_token');
       
       final response = await http.get(
-        Uri.parse('https://gallerappback-production.up.railway.app/api/v1/admin/usuarios?limit=50'),
+        Uri.parse('https://gallerappback-production.up.railway.app/api/v1/admin/usuarios?limit=200'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
