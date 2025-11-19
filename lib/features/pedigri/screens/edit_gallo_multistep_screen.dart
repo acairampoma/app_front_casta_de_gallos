@@ -818,7 +818,7 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
         }
       });
       
-      _showSnackBar('✅ ${images.length} foto(s) agregada(s) para el padre');
+      _showSnackBar('✅ ${images.length} foto(s) agregada(s) para el padre', isError: false);
     } catch (e) {
       _showSnackBar('Error seleccionando fotos del padre: $e', isError: true);
     }
@@ -848,7 +848,7 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
         }
       });
       
-      _showSnackBar('✅ ${images.length} foto(s) agregada(s) para la madre');
+      _showSnackBar('✅ ${images.length} foto(s) agregada(s) para la madre', isError: false);
     } catch (e) {
       _showSnackBar('Error seleccionando fotos de la madre: $e', isError: true);
     }
@@ -859,7 +859,7 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
     setState(() {
       _padreFotos.removeAt(index);
     });
-    _showSnackBar('Foto del padre eliminada');
+    _showSnackBar('Foto del padre eliminada', isError: false);
   }
 
   // ===== ELIMINAR FOTO DE MADRE =====
@@ -867,7 +867,7 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
     setState(() {
       _madreFotos.removeAt(index);
     });
-    _showSnackBar('Foto de la madre eliminada');
+    _showSnackBar('Foto de la madre eliminada', isError: false);
   }
 
   // ===== GUARDAR GALLO ÉPICO =====
@@ -1884,39 +1884,67 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  const Icon(Icons.male, color: Colors.blue, size: 28),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Crear Padre',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue,
-                          ),
-                        ),
-                        Text(
-                          'Activar para agregar información del padre',
-                          style: TextStyle(color: Colors.grey, fontSize: 12),
-                        ),
-                      ],
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(
+                color: _crearPadre ? Colors.red : Colors.black87,
+                width: 3,
+              ),
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => setState(() => _crearPadre = !_crearPadre),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: _crearPadre ? Colors.red.withOpacity(0.15) : Colors.grey.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(Icons.male, color: _crearPadre ? Colors.red : Colors.grey.shade600, size: 28),
                     ),
-                  ),
-                  Switch(
-                    value: _crearPadre,
-                    onChanged: (value) => setState(() => _crearPadre = value),
-                    activeColor: Colors.red,
-                  ),
-                ],
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Crear Padre',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w900,
+                              color: _crearPadre ? Colors.red : Colors.grey.shade700,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Toca aquí o usa el switch para agregar información del padre',
+                            style: TextStyle(color: Colors.grey, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: _crearPadre ? Colors.red.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Switch(
+                        value: _crearPadre,
+                        onChanged: (value) => setState(() => _crearPadre = value),
+                        activeColor: Colors.red,
+                        activeTrackColor: Colors.red.withOpacity(0.5),
+                        inactiveThumbColor: Colors.grey.shade600,
+                        inactiveTrackColor: Colors.grey.shade400,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -2019,39 +2047,67 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  const Icon(Icons.female, color: Colors.pink, size: 28),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Crear Madre',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.pink,
-                          ),
-                        ),
-                        Text(
-                          'Activar para agregar información de la madre',
-                          style: TextStyle(color: Colors.grey, fontSize: 12),
-                        ),
-                      ],
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(
+                color: _crearMadre ? Colors.red : Colors.black87,
+                width: 3,
+              ),
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => setState(() => _crearMadre = !_crearMadre),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: _crearMadre ? Colors.red.withOpacity(0.15) : Colors.grey.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(Icons.female, color: _crearMadre ? Colors.red : Colors.grey.shade600, size: 28),
                     ),
-                  ),
-                  Switch(
-                    value: _crearMadre,
-                    onChanged: (value) => setState(() => _crearMadre = value),
-                    activeColor: Colors.red,
-                  ),
-                ],
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Crear Madre',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w900,
+                              color: _crearMadre ? Colors.red : Colors.grey.shade700,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Toca aquí o usa el switch para agregar información de la madre',
+                            style: TextStyle(color: Colors.grey, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: _crearMadre ? Colors.red.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Switch(
+                        value: _crearMadre,
+                        onChanged: (value) => setState(() => _crearMadre = value),
+                        activeColor: Colors.red,
+                        activeTrackColor: Colors.red.withOpacity(0.5),
+                        inactiveThumbColor: Colors.grey.shade600,
+                        inactiveTrackColor: Colors.grey.shade400,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
