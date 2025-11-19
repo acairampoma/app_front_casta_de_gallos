@@ -223,13 +223,25 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text(
-          '🌳 Árbol Genealógico',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'assets/images/icono/padres.webp',
+              width: 24,
+              height: 24,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'Árbol Genealógico',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ],
         ),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
@@ -377,7 +389,7 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
             
             // 3. ABUELOS (GENERACIÓN -2)
             _buildGenerationSection(
-              '👴👵 ABUELOS',
+              'ABUELOS',
               [
                 Column(
                   children: [
@@ -409,6 +421,14 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
                 ),
               ],
               Colors.orange,
+              titleIcon: Image.asset(
+                'assets/images/icono/padres.webp',
+                width: 24,
+                height: 24,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Icon(Icons.elderly, color: Colors.white, size: 24);
+                },
+              ),
             ),
           ],
         ],
@@ -660,8 +680,8 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Agregar icono personalizado para PADRE y MADRE
-              if (label.contains('PADRE')) ...[
+              // Agregar icono personalizado para PADRE, MADRE, ABUELO y ABUELA
+              if (label.contains('PADRE') && !label.contains('ABUELO')) ...[
                 Image.asset(
                   'assets/images/icono/galloc.webp',
                   width: 20,
@@ -672,7 +692,29 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
                   },
                 ),
                 const SizedBox(width: 6),
-              ] else if (label.contains('MADRE')) ...[
+              ] else if (label.contains('MADRE') && !label.contains('ABUELA')) ...[
+                Image.asset(
+                  'assets/images/icono/gallina.webp',
+                  width: 20,
+                  height: 20,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(Icons.female, color: Colors.white, size: 16);
+                  },
+                ),
+                const SizedBox(width: 6),
+              ] else if (label.contains('ABUELO')) ...[
+                Image.asset(
+                  'assets/images/icono/galloc.webp',
+                  width: 20,
+                  height: 20,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(Icons.male, color: Colors.white, size: 16);
+                  },
+                ),
+                const SizedBox(width: 6),
+              ] else if (label.contains('ABUELA')) ...[
                 Image.asset(
                   'assets/images/icono/gallina.webp',
                   width: 20,
@@ -685,7 +727,7 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
                 const SizedBox(width: 6),
               ],
               Text(
-                label.replaceAll('🐓 ', '').replaceAll('🐔 ', ''), // Quitar emojis del texto
+                label.replaceAll('🐓 ', '').replaceAll('🐔 ', '').replaceAll('👴 ', '').replaceAll('👵 ', ''), // Quitar emojis del texto
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 12,
@@ -794,8 +836,8 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Agregar icono personalizado para PADRE y MADRE vacíos
-              if (label.contains('PADRE')) ...[
+              // Agregar icono personalizado para PADRE, MADRE, ABUELO y ABUELA vacíos
+              if (label.contains('PADRE') && !label.contains('ABUELO')) ...[
                 Image.asset(
                   'assets/images/icono/galloc.webp',
                   width: 20,
@@ -806,7 +848,29 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
                   },
                 ),
                 const SizedBox(width: 6),
-              ] else if (label.contains('MADRE')) ...[
+              ] else if (label.contains('MADRE') && !label.contains('ABUELA')) ...[
+                Image.asset(
+                  'assets/images/icono/gallina.webp',
+                  width: 20,
+                  height: 20,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(Icons.female, color: Colors.white, size: 16);
+                  },
+                ),
+                const SizedBox(width: 6),
+              ] else if (label.contains('ABUELO')) ...[
+                Image.asset(
+                  'assets/images/icono/galloc.webp',
+                  width: 20,
+                  height: 20,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(Icons.male, color: Colors.white, size: 16);
+                  },
+                ),
+                const SizedBox(width: 6),
+              ] else if (label.contains('ABUELA')) ...[
                 Image.asset(
                   'assets/images/icono/gallina.webp',
                   width: 20,
@@ -819,7 +883,7 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
                 const SizedBox(width: 6),
               ],
               Text(
-                label.replaceAll('🐓 ', '').replaceAll('🐔 ', ''),
+                label.replaceAll('🐓 ', '').replaceAll('🐔 ', '').replaceAll('👴 ', '').replaceAll('👵 ', ''),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 12,

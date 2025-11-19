@@ -220,7 +220,7 @@ class _PedigriScreenState extends State<PedigriScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          Expanded(child: _buildMiniStatCard('🌳', '$gallosPrincipales', 'Principales', Colors.green)),
+          Expanded(child: _buildMiniStatCard('🌳', '$gallosPrincipales', 'Principales', Colors.green, imagePath: 'assets/images/icono/padres.webp')),
           const SizedBox(width: 8),
           Expanded(child: _buildMiniStatCard('👁️', '$gallosMostrados', 'Mostrados', Colors.blue)),
           const SizedBox(width: 8),
@@ -230,7 +230,7 @@ class _PedigriScreenState extends State<PedigriScreen> {
     );
   }
 
-  Widget _buildMiniStatCard(String emoji, String value, String label, Color color) {
+  Widget _buildMiniStatCard(String emoji, String value, String label, Color color, {String? imagePath}) {
     return Container(
       width: double.infinity, // 🔥 OCUPAR TODO EL ANCHO DISPONIBLE
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12), // 🔥 MÁS PADDING
@@ -249,10 +249,17 @@ class _PedigriScreenState extends State<PedigriScreen> {
       child: Column( // 🔥 CAMBIAR A COLUMN PARA CENTRAR VERTICALMENTE
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            emoji, 
-            style: const TextStyle(fontSize: 18), // 🔥 EMOJI MÁS GRANDE
-          ),
+          imagePath != null
+            ? Image.asset(
+                imagePath,
+                width: 24,
+                height: 24,
+                fit: BoxFit.contain,
+              )
+            : Text(
+                emoji, 
+                style: const TextStyle(fontSize: 18), // 🔥 EMOJI MÁS GRANDE
+              ),
           const SizedBox(height: 4),
           Text(
             value,
@@ -576,16 +583,21 @@ class _PedigriScreenState extends State<PedigriScreen> {
                               BoxShadow(
                                 color: Colors.green.withOpacity(0.3),
                                 blurRadius: 4,
-                                offset: const Offset(0, 2),
+                                offset: Offset(0, 2),
                               ),
                             ],
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.account_tree, size: 18, color: Colors.white),
-                              SizedBox(width: 8),
-                              Text(
+                              Image.asset(
+                                'assets/images/icono/padres.webp',
+                                width: 18,
+                                height: 18,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
                                 'Ver Árbol Genealógico',
                                 style: TextStyle(
                                   fontSize: 14,

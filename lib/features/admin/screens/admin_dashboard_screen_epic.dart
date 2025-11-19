@@ -1172,23 +1172,37 @@ class _AdminDashboardScreenEpicState extends State<AdminDashboardScreenEpic>
           
           const SizedBox(height: 12),
           
-          // Métricas de usuarios
-          Row(
+          // Métricas de usuarios por tipo de plan
+          Column(
             children: [
-              _buildUsuarioMetric(
-                'Total', 
-                '${_usuarios.length}', 
-                Colors.blue,
+              Row(
+                children: [
+                  _buildUsuarioMetric(
+                    'Total', 
+                    '${_usuarios.length}', 
+                    Colors.blue,
+                  ),
+                  _buildUsuarioMetric(
+                    'Premium', 
+                    '${_usuarios.where((u) => u['plan_type'] == 'premium').length}', 
+                    Colors.amber,
+                  ),
+                ],
               ),
-              _buildUsuarioMetric(
-                'Premium', 
-                '${_usuarios.where((u) => u['is_premium'] == true).length}', 
-                Colors.green,
-              ),
-              _buildUsuarioMetric(
-                'Gratuitos', 
-                '${_usuarios.where((u) => u['is_premium'] == false).length}', 
-                Colors.grey,
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _buildUsuarioMetric(
+                    'Básico', 
+                    '${_usuarios.where((u) => u['plan_type'] == 'basico').length}', 
+                    Colors.green,
+                  ),
+                  _buildUsuarioMetric(
+                    'Gratuitos', 
+                    '${_usuarios.where((u) => u['plan_type'] == null || u['plan_type'] == 'gratuito').length}', 
+                    Colors.grey,
+                  ),
+                ],
               ),
             ],
           ),
