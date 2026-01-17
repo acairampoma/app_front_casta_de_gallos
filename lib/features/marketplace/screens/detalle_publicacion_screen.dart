@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../models/publicacion_model.dart';
-import '../../widgets/marketplace/foto_carousel.dart';
-import '../../services/whatsapp_service.dart';
+import '../../../models/publicacion_model.dart';
+import '../widgets/foto_carousel.dart';
+import '../../../services/whatsapp_service.dart';
 
 class DetallePublicacionScreen extends StatelessWidget {
   final Publicacion pub;

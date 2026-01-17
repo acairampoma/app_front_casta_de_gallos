@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import '../models/publicacion_model.dart';
+import '../../../models/publicacion_model.dart';
 import '../services/marketplace_service.dart';
 
 class MarketplaceProvider extends ChangeNotifier {

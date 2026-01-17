@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../models/publicacion_model.dart';
-import '../../screens/marketplace/detalle_publicacion_screen.dart';
-import '../../services/whatsapp_service.dart';
-import '../../services/marketplace_service.dart';
+import '../../../models/publicacion_model.dart';
+import '../screens/detalle_publicacion_screen.dart';
+import '../../../services/whatsapp_service.dart';
+import '../services/marketplace_service.dart';
 
 class PublicacionCard extends StatefulWidget {
   final bool compact;

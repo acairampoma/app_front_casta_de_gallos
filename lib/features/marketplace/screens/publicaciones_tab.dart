@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../widgets/marketplace/publicacion_card.dart';
-import '../../models/publicacion_model.dart';
-import '../../services/marketplace_service.dart';
+import '../widgets/publicacion_card.dart';
+import '../../../models/publicacion_model.dart';
+import '../services/marketplace_service.dart';
 
 class PublicacionesTab extends StatefulWidget {
   const PublicacionesTab({Key? key}) : super(key: key);

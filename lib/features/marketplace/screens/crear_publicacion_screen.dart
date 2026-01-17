@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
-import '../../services/gallo_service.dart';
-import '../../services/marketplace_service.dart';
+import '../../../services/gallo_service.dart';
+import '../services/marketplace_service.dart';
 
 class CrearPublicacionScreen extends StatefulWidget {
   const CrearPublicacionScreen({Key? key}) : super(key: key);

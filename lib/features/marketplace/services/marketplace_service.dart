@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../config/constants.dart';
-import 'gallo_service.dart';
+import '../../../config/constants.dart';
+import '../../../services/gallo_service.dart';
 
 class MarketplaceService {
   final String baseUrl;

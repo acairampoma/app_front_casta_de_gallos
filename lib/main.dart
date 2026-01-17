@@ -17,7 +17,7 @@ import 'features/peleas/screens/peleas_gallos_screen.dart';
 import 'features/admin/screens/admin_dashboard_screen.dart';
 import 'features/admin/screens/admin_transmisiones_screen.dart';
 import 'features/transmisiones/screens/transmisiones_screen.dart';
-import 'screens/marketplace/marketplace_screen.dart';
+import 'features/marketplace/screens/marketplace_screen.dart';
 import 'services/auth_service.dart';
 import 'services/connection_service.dart';
 import 'services/platform_factory.dart';
